@@ -1,0 +1,4171 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ESP32 Umweltmessstation | Interaktive Projektdokumentation</title>
+  <meta name="description" content="Interaktive Projektdokumentation zur ESP32 Umweltmessstation von Miklos Mueller." />
+  <style>
+    :root {
+      --bg:#06101d; --bg2:#0a1d34; --panel:rgba(255,255,255,.075); --panel2:rgba(255,255,255,.12);
+      --text:#edf7ff; --muted:#b9c7d8; --line:rgba(255,255,255,.16); --cyan:#4df0ff; --blue:#58a6ff;
+      --green:#62f090; --yellow:#ffd166; --orange:#ff9f43; --red:#ff5d6c; --violet:#b39cff;
+      --max:1220px; --radius:24px; --shadow:0 25px 70px rgba(0,0,0,.38);
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:radial-gradient(circle at 15% 0%,rgba(77,240,255,.20),transparent 35%),radial-gradient(circle at 92% 5%,rgba(179,156,255,.18),transparent 34%),linear-gradient(180deg,#06101d 0%,#08172a 55%,#050a12 100%);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;}
+    a{color:inherit;text-decoration:none} .wrap{width:min(var(--max),calc(100% - 40px));margin:auto}
+    .top{position:sticky;top:0;z-index:80;background:rgba(6,16,29,.76);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:13px 0;gap:18px} .brand{display:flex;align-items:center;gap:10px;font-weight:900}
+    .chip-logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--blue));box-shadow:0 0 28px rgba(77,240,255,.35);position:relative} .chip-logo:after{content:"";position:absolute;inset:9px;border:2px solid rgba(6,16,29,.65);border-radius:5px}
+    .navlinks{display:flex;flex-wrap:wrap;gap:9px;justify-content:flex-end;color:var(--muted);font-size:14px} .navlinks a{padding:8px 10px;border-radius:999px} .navlinks a:hover{background:rgba(255,255,255,.10);color:var(--text)}
+    .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);padding:10px 14px;border-radius:999px;color:var(--text);font-weight:800;cursor:pointer;transition:.18s} .btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.14)} .btn.primary{background:linear-gradient(135deg,var(--blue),var(--cyan));border:0;color:#05101c} .btn.danger{background:linear-gradient(135deg,var(--red),var(--orange));border:0;color:#20050b}
+    .hero{padding:72px 0 40px} .hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:32px;align-items:center} .eyebrow{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:rgba(77,240,255,.11);border:1px solid rgba(77,240,255,.28);color:var(--cyan);font-weight:900;font-size:13px;margin-bottom:18px}
+    h1{font-size:clamp(40px,6vw,72px);line-height:.95;margin:0;letter-spacing:-2.5px} h1 span{color:var(--cyan);text-shadow:0 0 38px rgba(77,240,255,.30)} .lead{font-size:18px;line-height:1.65;color:var(--muted);max-width:760px} .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+    .stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:24px} .stat{border:1px solid var(--line);background:var(--panel);border-radius:18px;padding:14px} .stat small{color:var(--muted)} .stat b{display:block;font-size:22px;margin-top:6px;color:var(--cyan)}
+    .device{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.055));border:1px solid rgba(255,255,255,.18);border-radius:30px;padding:22px;box-shadow:var(--shadow)} .device-shell{background:#06080e;border:8px solid #171b24;border-radius:24px;padding:15px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.04)}
+    .display{background:linear-gradient(160deg,#eff9ff,#cddff4);color:#102133;border-radius:15px;min-height:326px;padding:15px;display:grid;grid-template-rows:auto 1fr auto;gap:12px;position:relative;overflow:hidden} .display-head{display:flex;justify-content:space-between;align-items:center;color:#103d66;font-weight:900} .screen-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px} .screen-box{background:rgba(255,255,255,.67);border:2px solid rgba(16,61,102,.20);border-radius:12px;padding:9px} .screen-box small{display:block;color:#315c7a;font-weight:800} .screen-box b{font-size:22px;display:block;margin-top:5px}
+    .screen-status{background:rgba(16,61,102,.12);border-radius:12px;padding:10px;font-weight:900;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center} .bar{height:10px;background:rgba(16,61,102,.15);border-radius:999px;overflow:hidden;margin-top:7px} .bar span{display:block;height:100%;width:90%;background:linear-gradient(90deg,#5df08d,#4df0ff)} .status-pill{padding:7px 10px;border-radius:999px;background:#d8ffe4;color:#065b27}
+    .screen-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap} .screen-actions button{border:0;border-radius:10px;padding:8px 10px;font-weight:900;cursor:pointer;background:#113d66;color:white} .screen-actions button:nth-child(2){background:#169ec2} .screen-actions button:nth-child(3){background:#e23d4f} .screen-actions button:nth-child(4){background:#f59f31;color:#111}
+    .screen-view{display:none} .screen-view.active{display:block} .mini-chart{width:100%;height:145px;background:#eaf4ff;border-radius:12px;border:1px solid rgba(16,61,102,.18)}
+    section{padding:66px 0} .section-title{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:24px} h2{font-size:clamp(30px,4vw,48px);line-height:1.05;letter-spacing:-1.3px;margin:0} .section-title p{max-width:620px;color:var(--muted);line-height:1.6;margin:0}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px} .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px} .panel,.card{border:1px solid var(--line);background:var(--panel);border-radius:var(--radius);padding:22px;box-shadow:0 16px 36px rgba(0,0,0,.20)} .card:hover,.panel:hover{background:var(--panel2)} .card h3,.panel h3{margin:0 0 10px} .card p,.panel p{color:var(--muted);line-height:1.58} .tag{display:inline-flex;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-size:12px;font-weight:900;color:var(--cyan);margin-bottom:12px}
+    .diagram{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:stretch} .node{border:1px solid rgba(77,240,255,.23);background:rgba(77,240,255,.075);border-radius:18px;padding:14px;min-height:112px} .node b{color:var(--cyan);display:block;margin-bottom:7px} .node span{color:var(--muted);line-height:1.45}
+    .timeline{display:grid;gap:14px} .step{display:grid;grid-template-columns:160px 1fr;gap:14px;padding:16px;border-radius:18px;border:1px solid var(--line);background:rgba(255,255,255,.06)} .step time{color:var(--cyan);font-weight:900}
+    table{width:100%;border-collapse:collapse} th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,.12);text-align:left;vertical-align:top} th{color:var(--cyan);font-size:13px;text-transform:uppercase;letter-spacing:.05em} td{color:var(--muted);line-height:1.45}
+    .tabs{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px} .tab{padding:10px 13px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--muted);font-weight:900;cursor:pointer} .tab.active{background:var(--cyan);color:#06101d;border:0} .tab-panel{display:none} .tab-panel.active{display:block}
+    .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:18px} .gallery-card{margin:0;border:1px solid var(--line);background:var(--panel);border-radius:22px;overflow:hidden;cursor:pointer;box-shadow:0 12px 28px rgba(0,0,0,.22)} .gallery-card img{width:100%;height:210px;object-fit:cover;display:block} .gallery-card figcaption{padding:14px} .gallery-card figcaption strong{display:block} .gallery-card figcaption span{color:var(--muted);font-size:14px}
+    .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px} .metric{border:1px solid var(--line);background:rgba(255,255,255,.075);border-radius:18px;padding:16px} .metric small{color:var(--muted)} .metric b{display:block;margin-top:6px;font-size:26px} .green b{color:var(--green)} .yellow b{color:var(--yellow)} .red b{color:var(--red)} .cyan b{color:var(--cyan)}
+    .calib-controls{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0} .calib-controls button{border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--text);font-weight:900;border-radius:14px;padding:10px 13px;cursor:pointer} .calib-result{padding:18px;border-radius:20px;border:1px solid var(--line);background:rgba(255,255,255,.08)} .calib-result strong{font-size:28px}
+    .function-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px} .function-card{border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:18px;padding:16px} .function-card code{color:var(--cyan);font-weight:900} .function-card p{color:var(--muted);line-height:1.5;margin-bottom:0}
+    .search{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--text);font-size:15px;margin:0 0 14px} .codebox{background:#050913;border:1px solid var(--line);border-radius:18px;padding:16px;max-height:520px;overflow:auto;color:#d9ecff} pre{margin:0;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:1.48}
+    details{border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:18px;margin:12px 0;padding:14px} summary{font-weight:900;cursor:pointer;color:var(--cyan)} details p, details li{color:var(--muted);line-height:1.55}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;z-index:200;padding:24px} .modal.open{display:flex} .modal img{max-width:92vw;max-height:84vh;border-radius:14px;box-shadow:var(--shadow)} .modal button{position:absolute;top:20px;right:20px}
+    .reveal{opacity:0;transform:translateY(18px);transition:.55s ease} .reveal.visible{opacity:1;transform:none}
+    footer{padding:44px 0;border-top:1px solid var(--line);text-align:center;color:var(--muted)}
+    @media(max-width:980px){.hero-grid,.grid-2{grid-template-columns:1fr}.grid-3,.diagram,.gallery,.metric-grid,.function-grid,.stats-strip{grid-template-columns:1fr 1fr}.navlinks{display:none}}
+    @media(max-width:620px){.wrap{width:min(100% - 24px,var(--max))}.grid-3,.diagram,.gallery,.metric-grid,.function-grid,.stats-strip{grid-template-columns:1fr}.step{grid-template-columns:1fr}h1{letter-spacing:-1.4px}.hero{padding-top:46px}}
+  </style>
+</head>
+<body>
+  <header class="top"><nav class="wrap nav"><a class="brand" href="#top"><span class="chip-logo"></span><span>ESP32 Umweltmessstation</span></a><div class="navlinks"><a href="#doku">Doku 1:1</a><a href="#display">Display</a><a href="#aufbau">Aufbau</a><a href="#kalibrierung">Kalibrierung</a><a href="#code">Code</a><a href="#galerie">Bilder</a><a class="btn" href="https://github.com/MityusPityus/Umwelt-Messgeraet" target="_blank">GitHub</a></div></nav></header>
+  <main id="top">
+    <section class="hero"><div class="wrap hero-grid"><div class="reveal"><div class="eyebrow">Interaktive Projektdokumentation · Finalstand 21.07.2026</div><h1>ESP32 <span>Umweltmessstation</span> als lokales CPS.</h1><p class="lead">Diese Website bildet die finale Projektdokumentation interaktiv ab: Hardware, Software, Scrumboard, Tests, Kalibrierung, Bilder, Code und Reflexion. Sie ist als Webversion der PDF-Doku gedacht, aber mit klickbaren Bereichen, Simulationen und Code-Explorer.</p><div class="actions"><a class="btn primary" href="#doku">Interaktive Doku starten</a><a class="btn" href="assets/ESP32_Umweltstation_Projektdokumentation_FINAL_v2.pdf" target="_blank">PDF öffnen</a><a class="btn" href="https://github.com/MityusPityus/Umwelt-Messgeraet" target="_blank">Repository</a><button class="btn danger" id="fullscreen">Präsentationsmodus</button></div><div class="stats-strip"><div class="stat"><small>Sensor</small><b>BME680</b></div><div class="stat"><small>Anzeige</small><b>4 Zoll Touch</b></div><div class="stat"><small>Speicher</small><b>LittleFS</b></div><div class="stat"><small>Status</small><b>Fertig + Backlog</b></div></div></div>
+    <div class="device reveal" id="display"><div class="device-shell"><div class="display"><div class="display-head"><span>Umweltstation</span><span id="clock">--:--:--</span></div><div id="screen-live" class="screen-view active"><div class="screen-grid"><div class="screen-box"><small>Temperatur</small><b>25.6 °C</b></div><div class="screen-box"><small>Feuchte</small><b>36 %</b></div><div class="screen-box"><small>Druck</small><b>993.5 hPa</b></div><div class="screen-box"><small>Gas</small><b>132.5 kΩ</b></div></div><div class="screen-status"><div>Luftstatus<div class="bar"><span></span></div></div><span class="status-pill">Gut</span></div></div><div id="screen-stats" class="screen-view"><h3>Statistik</h3><div class="screen-grid"><div class="screen-box"><small>Heute</small><b>T 25.6 °C</b><b>F 36 %</b></div><div class="screen-box"><small>24h</small><b>Gas 88.7 kΩ</b><b>Mittel</b></div></div></div><div id="screen-graph" class="screen-view"><h3>24h Verlauf: Temperatur</h3><canvas class="mini-chart" id="miniChart" width="520" height="180"></canvas></div><div id="screen-alarm" class="screen-view"><h3>Alarm-Protokoll</h3><div class="screen-box"><small>Demo</small><b>Gas 60.0 kΩ</b><span>Schlecht · Buzzer aktiv</span></div><div class="screen-box"><small>Quittierung</small><b>Button gedrückt</b><span>Alarm stumm</span></div></div><div class="screen-actions"><button data-screen="live">LIVE</button><button data-screen="stats">STAT</button><button data-screen="graph">GRAPH</button><button data-screen="alarm">ALARME</button></div></div></div></div></div></section>
+
+    <section id="doku"><div class="wrap"><div class="section-title reveal"><h2>Doku 1:1 als interaktive Kapitel</h2><p>Die Inhalte der finalen Doku sind hier nicht nur zusammengefasst, sondern als aufklappbare und navigierbare Webdoku aufgebaut.</p></div>
+      <div class="grid-2">
+        <div class="panel reveal"><h3>Projektkern</h3><details open><summary>1. Einleitung</summary><p>Entwickelt wurde eine kompakte Umweltmessstation auf ESP32-Basis. Das System erfasst Raumwerte, verarbeitet sie lokal und zeigt sie auf einem 4-Zoll-TFT-Touchdisplay an. Im Mittelpunkt stehen Temperatur, Luftfeuchtigkeit, Luftdruck und die qualitative Luftbewertung über den Gaswiderstand des BME680.</p><p>Das fertige System arbeitet offline: keine Cloud, keine API, kein WLAN. Die Zeit kommt von einem DS3231 RTC-Modul.</p></details><details><summary>2. Projektplanung</summary><p>Die Umsetzung erfolgte iterativ. Einzelkomponenten wurden separat getestet und anschließend in die Hauptsoftware integriert. Das GitHub Repository trennt docs, hardware, software, tests und 3D-Modelle. Das Scrumboard enthielt Backlog, To Do, In Progress, Testing, In Review und Done.</p></details><details><summary>3. Architektur</summary><p>Der ESP32 verbindet BME680, DS3231, ST7796S-Display, XPT2046-Touch, Button, Buzzer und lokale LittleFS-Speicherung. Dadurch entsteht ein lokales Cyber-Physical System.</p></details></div>
+        <div class="panel reveal"><h3>Finale Erweiterungen</h3><details open><summary>Touch, Statistik, Graph</summary><p>Im finalen Stand kamen Touch-Navigation, Statistikscreen und ein 24h-Graph hinzu. Für die Präsentation wurde der Zeitraum von 14 Tagen auf 24 Stunden geändert, damit schnell sichtbare Daten entstehen.</p></details><details><summary>Alarmprotokoll</summary><p>Bei schlechter Luftqualität wird ein Alarmereignis mit Zeitstempel, Gaswert, Temperatur, Feuchtigkeit und Druck gespeichert. Der Screen zeigt die letzten Ereignisse.</p></details><details><summary>24h-Dauertest</summary><p>Der vollständige 24h-Dauertest blieb aus Zeitgründen im Backlog. Stattdessen wurde ein mehrstündiger Kurzzeittest mit Hygrometer und Gaswertvergleichen durchgeführt.</p></details></div>
+      </div></div></section>
+
+    <section id="volltext"><div class="wrap"><div class="section-title reveal"><h2>PDF-Doku direkt in der Website</h2><p>Damit die Website wirklich nicht nur eine Kurzfassung ist, ist die vollständige PDF-Dokumentation direkt eingebettet und zusätzlich als Volltext durchsuchbar.</p></div><div class="grid-2"><div class="panel reveal"><h3>PDF-Viewer</h3><p>Falls der Browser den PDF-Viewer nicht unterstützt, kann die PDF über den Button geöffnet werden.</p><p><a class="btn primary" href="assets/ESP32_Umweltstation_Projektdokumentation_FINAL_v2.pdf" target="_blank">PDF in neuem Tab öffnen</a></p><object data="assets/ESP32_Umweltstation_Projektdokumentation_FINAL_v2.pdf" type="application/pdf" style="width:100%;height:560px;border-radius:18px;border:1px solid var(--line);background:#fff"><p>PDF kann nicht eingebettet werden. Bitte über den Button öffnen.</p></object></div><div class="panel reveal"><h3>Volltext der Doku</h3><input class="search" id="docSearch" placeholder="Doku-Volltext durchsuchen, z. B. RTC, Touch, LittleFS, Kalibrierung..." /><p id="docSearchInfo" style="color:var(--muted)">Suchbegriff eingeben, dann wird der erste Treffer markiert.</p><details open><summary>Volltext anzeigen</summary><div class="codebox" style="max-height:560px"><pre id="docFullText">Projektdokumentation
+ESP32 Umweltmessstation
+Offline-faehige Umweltstation mit Display, Touch, Sensorik, RTC, Alarm und 3D-Gehaeuse
+Verfasser
+Ausbildung
+Projekt
+Projektstart
+Finaler Bearbeitungsstand
+Repository
+Hinweis
+
+Miklos Mueller
+Fachinformatiker fuer Anwendungsentwicklung
+IT-Tec-Projekt: ESP32 Umweltmessstation
+01.06.2026
+21.07.2026
+GitHub Repository: Umwelt-Messgeraet
+Finalisierte Fassung mit aktualisiertem Code, Scrumboard-Stand, Kalibrierung,
+Touchbedienung, Datenspeicherung, Graph und Alarmprotokoll.
+
+Arbeitsstand
+Der technische Prototyp ist funktionsfähig. Ein vollständiger 24h-Dauertest konnte vor der Präsentation nicht mehr
+abgeschlossen werden und bleibt als transparenter Backlog-Punkt dokumentiert. Stattdessen wurde ein mehrstündiger
+Kurzzeittest inklusive Plausibilitätsprüfung durchgeführt.
+
+
+Inhaltsverzeichnis
+1. Einleitung
+1.1 Projektbeschreibung
+1.2 Ausgangssituation und Ist-Zustand
+1.3 Zielsetzung und Soll-Konzept
+2. Projektplanung
+2.1 Vorgehensmodell und Projektorganisation
+2.2 GitHub Repository und Scrumboard
+2.3 Zeit- und Ablaufplanung
+2.4 Kosten- und Materialplanung
+3. Systemarchitektur und Hardwareauswahl
+3.1 Gesamtarchitektur
+3.2 Komponenten und Begruendung
+3.3 Schnittstellen und Pinbelegung
+4. Umsetzung und Entwicklung
+4.1 Entwicklungsumgebung
+4.2 Display- und Touchintegration
+4.3 BME680 Integration und Kalibrierung
+4.4 RTC Integration und Fehleranalyse
+4.5 Buzzer, Button und Alarm
+4.6 Datenspeicherung, Statistik, Graph und Alarmprotokoll
+4.7 Softwarestruktur und Hauptprogramm
+5. Gehäuseentwicklung und physischer Aufbau des CPS
+5.1 Anforderungen
+5.2 OpenSCAD Modellierung
+5.3 3D-Druck, Montage und Bilder
+6. Qualitätssicherung und Tests
+6.1 Einzeltests
+6.2 RTC Diagnoseverfahren
+6.3 Kalibrierung und Plausibilitätsprüfung
+
+
+6.4 Gesamtvalidierung und Kurzzeittest
+7. Projektmanagement
+7.1 Issues, Labels, Milestones und Priorisierung
+7.2 Finaler Projektstatus
+8. Soll-Ist-Vergleich
+9. Fazit, Reflexion und Ausblick
+10. Anhang
+
+
+1. Einleitung
+1.1 Projektbeschreibung
+Im Rahmen des Projekts wurde eine kompakte Umweltmessstation auf Basis eines ESP32 entwickelt. Das
+System erfasst Umgebungswerte in einem Raum, verarbeitet sie lokal und zeigt sie auf einem 4-Zoll-TFTTouchdisplay an. Im Mittelpunkt stehen Temperatur, Luftfeuchtigkeit, Luftdruck und eine qualitative Bewertung
+der Luftqualität anhand des Gaswiderstands des BME680 Sensors.
+Das fertige System arbeitet offline. Es nutzt keine Cloud, keine externe API und keine WLAN-Verbindung.
+Datum und Uhrzeit werden über ein DS3231 RTC-Modul bereitgestellt. Zusätzlich besitzt das System eine
+akustische Alarmfunktion, eine Alarmquittierung über einen Taster, ein Touchmenü, eine lokale
+Messwertspeicherung, eine Statistikansicht, einen 24h-Graph und ein Alarmprotokoll.
+
+1.2 Ausgangssituation und Ist-Zustand
+Zu Projektbeginn lagen keine fertigen Komponenten und kein aufgebautes Gesamtsystem vor. Zunächst
+mussten geeignete Hardwarekomponenten ausgewählt, getestet und auf Kompatibilität geprüft werden. Dabei
+mussten mehrere Schnittstellen kombiniert werden: SPI für Display und Touch, I2C für BME680 und RTC sowie
+digitale GPIOs für Button und Buzzer.
+Im finalen Stand sind alle Kernkomponenten integriert. Das defekte erste RTC-Modul wurde ersetzt, Display und
+Touch wurden kalibriert, das Gehäuse wurde gedruckt und montiert, Sensorwerte werden angezeigt, Messwerte
+werden lokal gespeichert und bei schlechter Luftqualität wird ein Alarm ausgelöst.
+
+1.3 Zielsetzung und Soll-Konzept
+•
+•
+•
+•
+•
+•
+•
+•
+•
+•
+•
+
+Messung von Temperatur, Luftfeuchtigkeit, Luftdruck und Gaswiderstand.
+Darstellung der Werte auf einem ST7796S TFT-Display.
+Bedienung über XPT2046 Touchcontroller.
+Anzeige von Datum und Uhrzeit über ein DS3231 RTC-Modul.
+Buzzerwarnung bei schlechter Luftqualität.
+Quittierung des Alarms über einen Taster.
+Lokale Speicherung der Messwerte über LittleFS.
+Statistikansicht und 24h-Verlauf für Präsentation und Auswertung.
+Alarmprotokoll mit Zeitstempel und Messwerten.
+Entwicklung und Montage eines eigenen 3D-gedruckten Gehäuses.
+Dokumentation des Projektverlaufs in GitHub inklusive Scrumboard.
+
+2. Projektplanung
+2.1 Vorgehensmodell und Projektorganisation
+Das Projekt wurde iterativ umgesetzt. Einzelkomponenten wurden zuerst isoliert getestet und danach
+schrittweise in die Hauptsoftware integriert. Diese Vorgehensweise war notwendig, weil Fehler bei
+Hardwareprojekten sowohl durch Software, Bibliotheken, Verkabelung, Stromversorgung, Bauteile als auch
+durch mechanische Passung entstehen können.
+Zur Organisation wurde ein GitHub Repository mit klarer Ordnerstruktur verwendet. Ergänzend wurde ein
+GitHub Project Board mit den Spalten Backlog, To Do, In Progress, Testing, In Review und Done gepflegt.
+Karten wurden mit Priorität, Estimate, Komplexität, Labels und Milestones versehen.
+
+2.2 GitHub Repository und Scrumboard
+Das Repository trennt Dokumentation, Hardware, Software, Tests und 3D-Modelle. Dadurch kann der
+Entwicklungsstand nachvollzogen und bei Bedarf weiterentwickelt werden.
+
+
+Ordner
+docs
+hardware
+software/esp32_umweltstation
+tests
+3d-modelle/openscad
+3d-modelle/stl
+
+Inhalt
+Dokumentation, Kalibrierung, Kurzzeittest,
+Bilder
+Bauteilliste, Schaltplan, Verkabelung
+Finaler Hauptcode
+Einzeltests fuer BME680, Display, RTC,
+Touch, Buzzer, Button, I2C
+OpenSCAD-Datei
+STL-Dateien für Body und Lid
+
+Zweck
+Nachvollziehbare Projektdokumentation
+Beschreibung des physischen Aufbaus
+Zentrale Anwendung fuer ESP32
+Komponententests und Nachweise
+Bearbeitbare Gehaeusequelle
+Dateien für den 3D-Druck
+
+Abbildung 1: Finales GitHub Project Board
+
+2.3 Zeit- und Ablaufplanung
+Arbeitspaket
+Hardwarekomponenten recherchieren
+und auswaehlen
+Arduino IDE und ESP32 Treiber
+einrichten
+Einzeltests für LED, Button, Buzzer,
+Display, BME680
+RTC anschließen, Fehler analysieren
+und Ersatzmodul testen
+BME680 integrieren und Sensorwerte
+anzeigen
+Touchscreen einrichten und
+kalibrieren
+Statistik, 24h-Graph und
+Alarmprotokoll umsetzen
+Gehäuse planen, drucken und
+montieren
+Sensorwerte kalibrieren und
+Grenzwerte festlegen
+Kurzzeittest und
+Plausibilitaetspruefung
+
+Status
+
+Estimate
+
+Bemerkung
+
+Done
+
+5h
+
+Grundlage fuer Komponentenauswahl
+
+Done
+
+2h
+
+Upload und Serial Monitor wurden geprueft
+
+Done
+
+6h
+
+Grundfunktionen wurden separat getestet
+
+Done
+
+6h
+
+Erstes Modul defekt, neues Modul erfolgreich
+
+Done
+
+5h
+
+Adresse 0x76, Werte im Hauptscreen
+
+Done
+
+4h
+
+Passende XPT2046-Library gefunden,
+Achsen korrigiert
+
+Done
+
+10 h
+
+LittleFS, Graph, Alarmhistorie
+
+Done
+
+18 h
+
+OpenSCAD, STL, Druck, Passprobe
+
+Done
+
+3h
+
+Temperatur-Offset und Gasgrenzwerte
+
+Done
+
+5h
+
+24h-Dauertest
+
+Backlog
+
+2 h aktiv
+
+Dokumentation finalisieren
+
+Done
+
+8h
+
+Mehrstündiger Test mit Hygrometer und
+Gaswerten
+Aus Zeitgründen vor Präsentation nicht
+vollständig
+Repository, Doku und Codeanhang
+aktualisiert
+
+
+2.4 Kosten- und Materialplanung
+Komponente
+ESP32 Dev Board
+BME680 Sensor
+ST7796S TFT Display 4 Zoll mit Touch
+Aktiver Buzzer
+Push Button
+DS3231 RTC Modul
+Breadboard und Jumperkabel
+3D-Druck Material
+LIR2023 Knopfzellenakku
+
+Status
+vorhanden / beschafft
+gekauft
+gekauft
+gekauft
+vorhanden
+Ersatz eingebaut
+vorhanden
+gedruckt
+gekauft
+
+Preis / Hinweis
+ca. 2 Euro
+9,99 Euro
+21,99 Euro
+2,59 Euro
+aus vorhandener Packung
+ca. 5 Euro
+Prototypenaufbau
+ca. 15 Euro
+4,94 Euro
+
+3. Systemarchitektur und Hardwareauswahl
+3.1 Gesamtarchitektur
+Das System besteht aus einem ESP32 als zentraler Steuereinheit. Der ESP32 liest Messwerte vom BME680,
+ruft Datum und Uhrzeit vom DS3231 ab, steuert das TFT-Display an, verarbeitet Touch- und Buttoneingaben,
+speichert Messwerte lokal und aktiviert bei schlechter Luftqualität den Buzzer.
+Ebene
+Steuerung
+Messung
+Zeit
+Ausgabe
+
+Komponente
+ESP32
+BME680
+DS3231 RTC
+ST7796S Display
+
+Bedienung
+
+XPT2046 Touch
+
+Alarm
+Quittierung
+Mechanik
+
+Aktiver Buzzer
+Push Button
+3D-gedrucktes Gehaeuse
+
+Aufgabe
+Zentrale Verarbeitung, I2C, SPI, GPIO, LittleFS
+Temperatur, Luftfeuchtigkeit, Luftdruck, Gaswiderstand
+Offline-Uhrzeit und Datum
+Visualisierung der Messwerte und Menüs
+Navigation zwischen Hauptscreen, Statistik, Graph und
+Alarmprotokoll
+Akustisches Warnsignal bei schlechter Luftqualität
+Alarm stummschalten
+Schutz, Displayaufnahme, Sensorbelueftung, Montage
+
+3.2 Komponenten und Begruendung
+Komponente
+ESP32
+BME680
+ST7796S Display
+XPT2046 Touch
+DS3231 RTC
+Buzzer
+Button
+3D-Gehaeuse
+
+Begruendung
+Genügend Leistung, mehrere GPIOs, I2C, SPI, Arduino-Unterstützung und lokaler
+Flashspeicher.
+Kombiniert vier Messwerte in einem kompakten Sensor und eignet sich für
+qualitative Luftbewertung.
+Großes 4-Zoll-Display mit guter Lesbarkeit für Dashboard und Menüs.
+Ermöglicht direkte Bedienung des Displays ohne zusaetzliche Bedienelemente.
+Präzise Offline-Zeitbasis mit Batteriebackup.
+Einfacher akustischer Alarm bei schlechter Luftqualität.
+Robuste Alarmquittierung, auch wenn Touch nicht verwendet werden soll.
+Mechanische Integration und präsentierbarer Prototyp.
+
+3.3 Schnittstellen und Pinbelegung
+Funktion
+Display SCK
+Display SDI / MOSI
+Display CS
+Display DC
+Display RST
+Touch T_CLK
+Touch T_DIN
+Touch T_DO
+Touch T_CS
+Touch T_IRQ
+
+ESP32 Pin
+GPIO18
+GPIO23
+GPIO5
+GPIO2
+GPIO4
+GPIO18
+GPIO23
+GPIO19
+GPIO27
+GPIO14
+
+Hinweis
+SPI Clock
+SPI Datenleitung zum Display
+Chip Select Display
+Data/Command
+Reset
+gemeinsamer SPI Clock
+gemeinsamer MOSI
+MISO fuer Touchdaten
+Chip Select Touch
+Touch Interrupt
+
+
+I2C SDA
+I2C SCL
+Buzzer Signal
+Button
+
+GPIO21
+GPIO22
+GPIO26
+GPIO13
+
+BME680 und RTC
+BME680 und RTC
+aktiver Buzzer
+INPUT_PULLUP gegen GND
+
+4. Umsetzung und Entwicklung
+4.1 Entwicklungsumgebung
+Als Entwicklungsumgebung wurde die Arduino IDE verwendet. Der serielle Monitor mit 115200 Baud war das
+wichtigste Diagnosewerkzeug. Die Entwicklung erfolgte testgetrieben im praktischen Sinne: Jede wichtige
+Komponente wurde zuerst einzeln getestet, bevor sie in die Hauptsoftware integriert wurde.
+
+4.2 Display- und Touchintegration
+Das ST7796S-Display wurde über SPI betrieben. Zunächst wurden Rotation, Farben, Textpositionen und
+Ausrichtung getestet. Nach dem Einbau ins Gehäuse wurde das Layout kompakter gemacht, damit obere und
+untere Inhalte nicht vom Gehäuserand verdeckt werden.
+Der Touchscreen war ein wichtiger Debugging-Schritt. Die zuerst getestete Bonezegei-XPT2046-Bibliothek
+zeigte im Zusammenspiel mit dem Display unzuverlässiges Verhalten. Die finale Lösung verwendet die
+XPT2046_Touchscreen-Bibliothek. Danach wurden Achsen gespiegelt und ein kleiner X-Offset gesetzt, bis die
+Touchposition exakt zur Anzeige passte.
+Touch-Thema
+Library
+Touch CS
+Touch IRQ
+Achsen
+Offset
+Ergebnis
+
+Finale Loesung
+XPT2046_Touchscreen
+GPIO27
+GPIO14
+X und Y gespiegelt, kein XY-Swap
+X-Offset +12 Pixel
+Touchpunkte und Buttons treffen korrekt
+
+4.3 BME680 Integration und Kalibrierung
+Der BME680 wurde per I2C eingebunden. Im finalen Aufbau wurde er unter der Adresse 0x76 gefunden. Er
+liefert Temperatur, Luftfeuchtigkeit, Luftdruck und Gaswiderstand. Wichtig ist, dass der Gaswert kein CO2-Wert
+ist, sondern ein Rohwert, der qualitativ zur Luftbewertung genutzt wird.
+Messgroesse
+Temperatur
+Luftfeuchtigkeit
+Luftdruck
+Gaswert
+
+Finale Verarbeitung
+BME680-Wert plus Offset -3,6 °C, da Sensor im Gehäuse zu warm misst.
+Direkte Ausgabe, beobachtete Abweichung ca. -3,4 Prozentpunkte.
+Direkte Ausgabe ohne Offset, da Referenzdruck oft meereshöhenkorrigiert ist.
+Bewertung Über Grenzwerte: Gut, Mittel, Schlecht.
+
+4.4 RTC Integration und Fehleranalyse
+Das erste DS3231 RTC-Modul wurde per I2C erkannt, die Uhrzeit lief jedoch nicht weiter. Durch mehrere
+Diagnoseschritte konnte das Problem auf das Modul bzw. den Oszillator eingegrenzt werden. Nach Austausch
+gegen ein neues DS3231-Modul zählte die Zeit korrekt hoch. Damit war das RTC-Problem geloest.
+Test
+I2C-Scanner
+RTClib-Test
+RAW-Registertest
+SQW-Test
+Ersatzmodul
+
+Ergebnis
+RTC-Adresse 0x68 wurde erkannt.
+Altes Modul zählte nicht hoch.
+Sekundenregister blieb stehen.
+Kein korrektes 1Hz-Signal.
+Zeit zählt korrekt, RTC funktioniert offline.
+
+
+4.5 Buzzer, Button und Alarm
+Der Buzzer wird über GPIO26 betrieben und gibt bei schlechter Luftqualität ein periodisches Signal aus. Der
+Button an GPIO13 verwendet INPUT_PULLUP und dient zur Quittierung. Wird die Luft wieder besser, wird die
+Alarmquittierung automatisch zurückgesetzt.
+Der Alarm wird ausgelöst, wenn der Gaswert unter 70 kOhm fällt. Beim Übergang von nicht schlecht zu schlecht
+wird zusätzlich ein Alarmereignis mit Zeitstempel und Messwerten gespeichert.
+
+4.6 Datenspeicherung, Statistik, Graph und Alarmprotokoll
+Die Messwerte werden lokal über LittleFS im ESP32-Flash gespeichert. Es werden CSV-Zeilen mit Zeitstempel,
+Temperatur, Luftfeuchtigkeit, Druck und Gaswert geschrieben. Für die Präsentation wurde das Speicherintervall
+auf 30 Sekunden gesetzt, damit schnell sichtbare Daten für Statistik und Graph entstehen. Für den normalen
+Betrieb kann das Intervall auf 5 Minuten gestellt werden.
+Funktion
+Statistik
+24h Graph
+Alarmprotokoll
+Flicker-Fix
+
+Beschreibung
+Durchschnittswerte für Heute und die letzten 24 Stunden.
+Stundenweise Mittelwerte für Temperatur, Feuchtigkeit, Druck und Gas.
+Zeigt die letzten Alarmereignisse mit Datum, Uhrzeit und Messwerten.
+Stats und Graph werden nicht bei jedem Sensorupdate neu gezeichnet, sondern
+nur bei relevanten Änderungen.
+
+4.7 Softwarestruktur und Hauptprogramm
+Die Software ist in klar getrennte Funktionsbereiche aufgebaut. Dadurch bleibt die Logik trotz vieler
+Komponenten nachvollziehbar. Die Hauptschleife verwendet millis() statt langer delay()-Aufrufe, damit Touch,
+Buzzer, Uhrzeit, Sensoren und Logging parallel reagieren können.
+Programmteil
+setup()
+loop()
+updateSensorData()
+handleTouch()
+handleBuzzer()
+LittleFS-Funktionen
+
+Aufgabe
+Initialisiert SPI, I2C, LittleFS, Display, Touch, RTC, BME680, Button und
+Buzzer.
+Ruft Touch, Button, Buzzer, Uhrzeit, Sensorupdate und Logging zyklisch auf.
+Liest Sensorwerte, wendet Offset an, bewertet Luftqualität und speichert
+Alarmübergang.
+Verarbeitet Navigation zwischen Hauptscreen, Statistik, Graph und
+Alarmprotokoll.
+Schaltet den Buzzer periodisch bei aktivem Alarm.
+Speichern und Berechnen von Mess- und Alarmdaten.
+
+Persönlicher Schwerpunkt
+Besonders gelungen ist die finale Displayoberfläche mit echten Sensorwerten. Aus der reinen Messwertausgabe wurde
+ein bedienbares Gerät mit Touchmenü, Statistik, Graphanzeige und Alarmprotokoll.
+
+5. Gehäuseentwicklung und physischer Aufbau des CPS
+5.1 Anforderungen
+•
+•
+•
+•
+•
+•
+•
+
+Frontausschnitt und Befestigung für das 4-Zoll-Display.
+Abnehmbarer Deckel mit Schraubpunkten.
+Lueftungsschlitze fuer den BME680.
+Seitlicher USB-Kabelausgang.
+Platz für ESP32, Breadboard, RTC, BME680, Buzzer und Verkabelung.
+Bedienbarer Button und sichtbares Display.
+Wartbarer Aufbau für Nacharbeiten und Fehleranalyse.
+
+
+5.2 OpenSCAD Modellierung
+Das Gehäuse wurde parametrisch in OpenSCAD erstellt. Masse wie Breite, Tiefe, Displayausschnitt,
+Sensorhalter und Lüftungsschlitze konnten dadurch mehrfach angepasst werden. Die Quelldatei liegt im
+Repository unter 3d-modelle/openscad.
+Bereich
+Aussenmass
+Display
+BME680
+Deckel
+USB-Ausgang
+Gravur
+
+Entscheidung
+ca. 168 mm Breite, 115 mm Tiefe, 85 mm Höhe
+Frontausschnitt mit Befestigungspunkten
+Position nahe Lueftungsschlitzen
+Abnehmbar, verschraubbar
+Seitlich
+Umweltstation und Mityu - Prototype
+
+5.3 3D-Druck, Montage und Bilder
+Das Gehäuse wurde gedruckt, montiert und mit Schrauben befestigt. Beim Prototyping waren kleinere
+Nacharbeiten normal. Der finale Stand ist so weit passend, dass Display, Schrauben und Hüllenaufbau
+verwendet werden konnten.
+
+Abbildung 1: Gehäuse geschlossen
+
+
+Abbildung 2: Gehäuse geöffnet
+
+
+Abbildung 3: Detail Sensorbelüftung
+
+6. Qualitaetssicherung und Tests
+6.1 Einzeltests
+Komponente
+ESP32
+Display
+Touch
+BME680
+RTC
+Buzzer
+Button
+LittleFS
+Graph/Statistik
+
+Test
+Upload, Serial Monitor, millis-Test
+Farben, Text, Rotation, Orientierung
+Libraryvergleich, Rohwerte, Kalibrierung, Buttonzonen
+I2C-Adresse 0x76, Werteausgabe
+Ersatzmodul, Zeit zählt hoch
+GPIO26 HIGH/LOW und Alarmtakt
+INPUT_PULLUP und Alarmquittierung
+Mess- und Alarmdaten speichern
+24h-Werte und Menues
+
+Status
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Bestanden im Kurztest
+
+
+6.2 RTC Diagnoseverfahren
+Die RTC-Diagnose wurde besonders detailliert dokumentiert, weil das erste Modul zwar erreichbar war, jedoch
+nicht zählte. Die Untersuchung bewies, dass der Fehler nicht durch Software oder I2C-Verkabelung verursacht
+wurde, sondern durch das Modul selbst.
+
+6.3 Kalibrierung und Plausibilitätsprüfung
+Pruefung
+Temperaturvergleich
+Feuchtevergleich
+
+Wert / Beobachtung
+ESP32 29,2 °C, Hygrometer 25,6 °C
+ESP32 32,6 %, Hygrometer 36 %
+
+Druckvergleich
+
+Sensor 993,5 hPa, Vergleich 1022 hPa
+
+Fenster offen
+Fenster geschlossen
+Sensor angepustet
+
+132,5 kOhm
+88,7 kOhm
+ca. 60 kOhm
+
+Ergebnis
+Offset -3,6 °C eingebaut
+plausibel, kein separater Offset
+kein Offset, da Referenz
+vermutlich reduziert
+Gut
+Mittel
+Schlecht, Alarmbereich
+
+6.4 Gesamtvalidierung und Kurzzeittest
+Ein vollständiger 24h-Dauertest konnte vor der Präsentation nicht mehr durchgeführt werden. Stattdessen wurde
+ein mehrstündiger Kurzzeittest durchgeführt. Dabei wurden Anzeige, Touchbedienung, Sensorwerte, RTC,
+Alarm, Statistik, 24h-Graph und Alarmprotokoll getestet.
+Prüfpunkt
+Displayanzeige
+BME680
+RTC
+Touch
+Buzzer
+Button
+Gehäuse
+24h-Dauertest
+
+Erwartung
+Werte bleiben lesbar und aktualisieren sich
+Messwerte plausibel und reagieren auf Umgebung
+Uhrzeit läuft korrekt offline
+Buttons reagieren an korrekter Position
+Alarm bei schlechter Luftqualität
+Alarm kann quittiert werden
+Display und Schrauben passen
+Langzeitstabilität über 24h
+
+Status
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Backlog
+
+7. Projektmanagement
+7.1 Issues, Labels, Milestones und Priorisierung
+Das Projektboard nutzte Prioritäten P0 bis P3, Komplexität, Estimate, Labels und Milestones. Die Werte wurden
+an das Einzelprojekt angepasst und nicht nur formal aus einer Scrum-Vorlage übernommen.
+Feld
+Priority
+Komplexität
+Estimate
+Labels
+Milestones
+
+Verwendung
+P0 kritisch, P1 wichtig, P2 normal, P3 unkritisch
+Gering, Mittel, Hoch, Sehr Hoch
+Aktiver Arbeitsaufwand in Stunden, nicht Laufzeit
+Hardware, Software, Testing, Documentation, CAD, Bug
+Elektronik funktionsfähig, Gehäuse fertiggestellt, Projektabschluss
+
+7.2 Finaler Projektstatus
+Status
+Done
+Backlog
+To Do / In Progress /
+Testing / In Review
+
+Beispiele
+BME680 Test und Integration, RTC Austausch, Display finalisieren, Touch einrichten,
+Sensorwerte auslesen, Montage und Passprüfung, Statistik, Graph, Alarmprotokoll,
+Dokumentation
+24h Dauertest als transparenter offener Punkt
+Zum finalen Stand keine offenen Karten in diesen Spalten
+
+
+8. Soll-Ist-Vergleich
+Anforderung
+Temperaturmessung
+Luftfeuchtigkeit
+Luftdruck
+
+Soll
+Wert messen und anzeigen
+Wert messen und anzeigen
+Wert anzeigen
+
+Luftqualität
+
+Gaswert bewerten
+
+Display
+Touch
+RTC
+Buzzer
+Button
+Datenspeicherung
+Graph
+Alarmprotokoll
+Gehäuse
+24h-Test
+
+Werte übersichtlich anzeigen
+Menüs bedienen
+Datum und Uhrzeit offline
+Alarm bei schlechter Luft
+Alarm quittieren
+Messwerte lokal speichern
+Verlauf sichtbar machen
+Alarmereignisse nachvollziehen
+3D-gedruckter Aufbau
+Langzeittest durchführen
+
+Ist / finaler Stand
+Erfüllt, inklusive Offset -3,6 °C
+Erfüllt
+Erfüllt, ohne festen Offset
+Erfüllt, Grenzwerte Gut/Mittel/Schlecht
+definiert
+Erfüllt, kompakter Hauptscreen
+Erfüllt, Statistik, Graph, Alarme, Zurück
+Erfüllt nach Modultausch
+Erfüllt
+Erfüllt
+Erfüllt über LittleFS
+Erfüllt als 24h-Graph
+Erfüllt
+Erfüllt mit Nacharbeit
+Nicht vollständig, bleibt Backlog
+
+9. Fazit, Reflexion und Ausblick
+Das Projekt entwickelte sich von einer einfachen ESP32-Sensoridee zu einem vollständigen lokalen CyberPhysical System. Besonders erfolgreich war die Kombination aus Sensorik, Anzeige, Touchbedienung, lokaler
+Speicherung und Alarmreaktion. Der finale Prototyp zeigt nicht nur Live-Werte, sondern erlaubt auch Statistik,
+24h-Verlauf und Alarmhistorie.
+Ein wichtiger technischer Lernpunkt war das systematische Debugging. Das RTC-Problem wurde nicht geraten,
+sondern durch I2C-Scan, RTClib-Test, Registeranalyse und SQW-Test eingegrenzt. Auch beim Touchscreen
+zeigte sich, dass eine passende Library entscheidend ist. Erst nach dem Wechsel auf XPT2046_Touchscreen
+und nach Kalibrierung funktionierte die Bedienung sauber.
+Besonders stolz bin ich auf das Display und die Darstellung der Sensorwerte. Der Hauptbildschirm wirkt wie ein
+echtes kleines Messgerät, und die Zusatzscreens für Statistik, Graph und Alarmprotokoll machen das System
+deutlich hochwertiger als einen reinen Sensortest.
+Rückblickend habe ich gelernt, wie man ein technisches Projekt von Anfang bis Ende realisiert: Planung,
+Hardwareauswahl, Tests, Fehlersuche, Softwareentwicklung, 3D-Gehäuse, Projektboard, Repository und
+Dokumentation. Der nicht mehr durchgeführte 24h-Dauertest ist ein ehrlicher offener Punkt, aber die
+Kernfunktionen wurden erfolgreich umgesetzt und im Kurzzeittest plausibilisiert.
+
+Ausblick
+•
+•
+•
+•
+•
+
+24h-Dauertest nachholen und Ergebnis ergänzen.
+Optional SD-Karte für einfacheren Datenexport ergänzen.
+Gehäuseversion 2 mit optimierter Luftführung und passgenaueren Haltern entwickeln.
+Langzeitkalibrierung der Gasgrenzwerte mit mehr Messsituationen durchführen.
+Optional Exportfunktion für CSV-Daten ergänzen.
+
+10. Anhang
+Anhang A: Anforderungsmatrix
+ID
+F-01
+F-02
+F-03
+
+Anforderung
+Temperatur kontinuierlich messen
+Luftfeuchtigkeit messen
+Luftdruck anzeigen
+
+Kategorie
+Funktional
+Funktional
+Funktional
+
+Status
+Erfüllt
+Erfüllt
+Erfüllt
+
+F-04
+
+Luftqualität bewerten
+
+Funktional
+
+Erfüllt
+
+F-05
+
+Datum und Uhrzeit offline
+
+Funktional
+
+Erfüllt
+
+Nachweis
+BME680, Hauptscreen
+BME680, Hauptscreen
+BME680, Hauptscreen
+Gasgrenzwerte,
+Statusanzeige
+DS3231 Ersatzmodul
+
+
+anzeigen
+F-06
+
+Alarm bei schlechter Luftqualität
+
+Funktional
+
+Erfüllt
+
+F-07
+F-08
+F-09
+F-10
+NF-01
+NF-02
+
+Alarm quittieren
+Statistik anzeigen
+Verlauf anzeigen
+Alarmereignisse speichern
+Offlinefähig
+Gut lesbare Anzeige
+
+Funktional
+Funktional
+Funktional
+Funktional
+Nicht-funktional
+Nicht-funktional
+
+Erfüllt
+Erfüllt
+Erfüllt
+Erfüllt
+Erfüllt
+Erfüllt
+
+NF-03
+
+Sensor bekommt Luftkontakt
+
+Nicht-funktional
+
+Teilweise erfüllt
+
+NF-04
+NF-05
+
+Wartbares Gehäuse
+Dokumentation nachvollziehbar
+
+Nicht-funktional
+Nicht-funktional
+
+Erfüllt
+Erfüllt
+
+Buzzer, Grenzwert &lt; 70
+kOhm
+Button GPIO13
+Stats Screen
+24h Graph
+Alarmprotokoll
+RTC und LittleFS
+4-Zoll-Display
+Lüftungsschlitze,
+Gehäuseprototyp
+Schraubbarer Deckel
+GitHub, Doku, Tests
+
+Anhang B: Detailliertes Testprotokoll
+Testfall
+ESP32 Basis
+I2C Scanner
+Display Test
+Touch Test
+
+XPT2046 prüfen
+
+BME680 Test
+
+Sensorwerte lesen
+
+Ergebnis
+Sketch laeuft, Ausgabe sichtbar
+BME680 0x76, RTC 0x68 erkannt
+Text, Farben, Rotation sichtbar
+Touchpunkte korrekt nach
+Kalibrierung
+Temperatur, Feuchte, Druck, Gas
+
+RTC Test altes Modul
+
+Zeit soll laufen
+
+Zeit blieb stehen
+
+RTC Ersatzmodul
+Buzzer/Button
+
+Zeit soll laufen
+Alarm und Quittierung
+
+Sekunden zaehlen hoch
+Buzzer aktiv, Button quittiert
+Mess- und Alarmdaten werden
+geschrieben
+Offset und Grenzwerte definiert
+Nicht durchgeführt
+
+LittleFS
+Kalibrierung
+24h Dauertest
+
+Ziel
+Upload und Serial Monitor prüfen
+I2C-Geraete erkennen
+ST7796S prüfen
+
+Daten speichern
+Plausibilitaet prüfen
+Langzeitstabilität prüfen
+
+Bewertung
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Nicht
+bestanden
+Bestanden
+Bestanden
+Bestanden
+Bestanden
+Backlog
+
+Anhang C: Ausführliche RTC-Fehleranalyse
+Die RTC wurde besonders intensiv untersucht, weil das erste Modul zwar über I2C erreichbar war, aber die Zeit
+nicht weiterlief. Die Analyse umfasste I2C-Erkennung, RTClib-Test, Versorgungstest, RAW-Registertest und
+SQW-Test. Erst der Austausch des Moduls brachte die Lösung. Dadurch wurde verifiziert, dass das erste Modul
+defekt war.
+
+Anhang D: GitHub Project Board - Bewertungslogik
+Feld
+Priority
+Priority
+Priority
+Priority
+Komplexität
+Komplexität
+Komplexität
+Komplexität
+
+Ausprägung
+P0
+P1
+P2
+P3
+Gering
+Mittel
+Hoch
+Sehr Hoch
+
+Bedeutung
+Blockiert zentrale Funktion oder Abschluss
+Wichtige Funktion oder notwendiger Bestandteil
+Relevant, aber nicht blockierend
+Nice-to-have
+Einfacher Einzeltest
+Mehrere Schritte, überschaubares Risiko
+Integration, Fehlersuche oder mechanische Nacharbeit
+Umfangreiche Aufgabe mit vielen Iterationen
+
+Anhang E: Gehäuseentwicklung - Änderungsprotokoll
+Änderung
+Displayausschnitt
+angepasst
+Deckel abnehmbar
+USB-Ausgang rechts
+Lüftung oben und hinten
+BME680-Halter
+Breadboard-Lippen
+Gravur
+
+Grund
+
+Umsetzung
+
+Display sollte sauber sitzen
+
+Ausschnitt und Schraubpunkte überarbeitet
+
+Zugriff auf Komponenten
+Kabel sauber herausführen
+BME680 braucht Luftkontakt
+Sensor unter Lüftung positionieren
+Breadboard sollte nicht wackeln
+Beschriftung und Prototypkennung
+
+Schraubpunkte vorgesehen
+Seitlicher Schlitz
+Schlitze im Deckel und Rückbereich
+Einschubhalter
+Flache Haltestege
+Umweltstation und Mityu - Prototype
+
+
+Anhang F: Offene Nacharbeiten
+•
+•
+•
+•
+•
+
+24h-Dauertest nachholen und Ergebnis ergänzen.
+Finale Fotos in die Bildplatzhalter einfügen.
+Kostenliste bei Bedarf mit Rechnungen finalisieren.
+Langzeitmessungen zur weiteren Gaswertkalibrierung durchführen.
+Optional Gehäuseversion 2 entwickeln.
+
+
+Anhang G: Vollständiger Hauptprogrammcode
+Der folgende Code ist der finale Stand der Hauptsoftware. Er enthält Display, Touch, Sensorik, RTC, LittleFS, Statistik, 24h-Graph, Alarmprotokoll, Buzzer und
+Button.
+Hinweis
+Für die Präsentation speichert der Code alle 30 Sekunden. Für normalen Betrieb kann logInterval auf 300000 ms gesetzt werden.
+
+#include &lt;SPI.h&gt;
+#include &lt;Wire.h&gt;
+#include &lt;LittleFS.h&gt;
+#include &lt;Adafruit_GFX.h&gt;
+#include &lt;Adafruit_ST7796S.h&gt;
+#include &lt;Adafruit_Sensor.h&gt;
+#include &lt;Adafruit_BME680.h&gt;
+#include &lt;XPT2046_Touchscreen.h&gt;
+#include &quot;RTClib.h&quot;
+// ======================================================
+// PINS
+// ======================================================
+#define TFT_CS
+#define TFT_DC
+#define TFT_RST
+
+5
+2
+4
+
+#define TOUCH_CS
+#define TOUCH_IRQ
+
+27
+14
+
+#define BUZZER_PIN 26
+#define BUTTON_PIN 13
+#define I2C_SDA 21
+#define I2C_SCL 22
+// ======================================================
+// OBJEKTE
+// ======================================================
+Adafruit_ST7796S display(TFT_CS, TFT_DC, TFT_RST);
+XPT2046_Touchscreen touch(TOUCH_CS, TOUCH_IRQ);
+Adafruit_BME680 bme;
+RTC_DS3231 rtc;
+// ======================================================
+// KALIBRIERUNG
+// ======================================================
+const float TEMP_OFFSET = -3.6;
+const float PRESSURE_OFFSET = 0.0;
+const float GAS_BAD_THRESHOLD = 70.0;
+const float GAS_MEDIUM_THRESHOLD = 100.0;
+// ======================================================
+// DATEISPEICHER
+// ======================================================
+const char* LOG_FILE = &quot;/umwelt_log.csv&quot;;
+const char* ALARM_FILE = &quot;/alarm_log.csv&quot;;
+// Fuer Praesentation/Test: alle 30 Sekunden speichern.
+// Fuer echten Betrieb spaeter auf 300000 stellen.
+
+
+const unsigned long logInterval = 30000;
+// const unsigned long logInterval = 300000;
+unsigned long lastLogSave = 0;
+const unsigned long STORAGE_RETENTION_SECONDS = 14UL * 24UL * 60UL * 60UL;
+const unsigned long LAST_24H_SECONDS = 24UL * 60UL * 60UL;
+// ======================================================
+// TIMER
+// ======================================================
+unsigned long lastSensorUpdate = 0;
+unsigned long lastClockUpdate = 0;
+unsigned long lastBuzzerToggle = 0;
+unsigned long lastButtonPress = 0;
+unsigned long lastTouchAction = 0;
+const unsigned long sensorUpdateInterval = 2000;
+const unsigned long clockUpdateInterval = 1000;
+const unsigned long buzzerInterval = 300;
+const unsigned long debounceDelay = 250;
+const unsigned long touchDebounceDelay = 350;
+// ======================================================
+// FLICKER FIX FLAGS
+// ======================================================
+bool statsNeedsRefresh = false;
+bool graphNeedsRefresh = false;
+bool alarmLogNeedsRefresh = false;
+// ======================================================
+// ALARM-LOGIK
+// ======================================================
+bool airBad = false;
+bool lastAirBadState = false;
+bool alarmMuted = false;
+bool buzzerState = false;
+const bool FORCE_ALARM_TEST = false;
+// ======================================================
+// FARBEN RGB565
+// ======================================================
+#define BLACK
+0x0000
+#define WHITE
+0xFFFF
+#define RED
+0xF800
+#define GREEN
+0x07E0
+#define BLUE
+0x001F
+#define YELLOW
+0xFFE0
+#define CYAN
+0x07FF
+#define MAGENTA 0xF81F
+#define ORANGE
+0xFD20
+#define GRAY
+0x8410
+#define DARKGRAY 0x4208
+#define NAVY
+0x0010
+// ======================================================
+// DISPLAY / TOUCH
+// ======================================================
+const int SCREEN_W = 480;
+const int SCREEN_H = 320;
+const int DISPLAY_ROTATION = 1;
+const int TOUCH_ROTATION = 1;
+int TOUCH_MIN_X = 200;
+int TOUCH_MAX_X = 3800;
+
+
+int TOUCH_MIN_Y = 200;
+int TOUCH_MAX_Y = 3800;
+bool TOUCH_SWAP_XY = false;
+bool TOUCH_INVERT_X = true;
+bool TOUCH_INVERT_Y = true;
+int TOUCH_OFFSET_X = 12;
+int TOUCH_OFFSET_Y = 0;
+// ======================================================
+// SCREEN MODUS
+// ======================================================
+enum ScreenMode {
+SCREEN_MAIN,
+SCREEN_STATS,
+SCREEN_GRAPH,
+SCREEN_ALARMS
+};
+ScreenMode currentScreen = SCREEN_MAIN;
+// ======================================================
+// GRAPH MODUS
+// ======================================================
+enum GraphMode {
+GRAPH_TEMP,
+GRAPH_HUM,
+GRAPH_PRESSURE,
+GRAPH_GAS
+};
+GraphMode currentGraphMode = GRAPH_TEMP;
+// ======================================================
+// LAYOUT MAIN SCREEN
+// ======================================================
+const int HEADER_X = 12;
+const int HEADER_Y = 18;
+const int HEADER_W = 456;
+const int HEADER_H = 42;
+const int BOX_W = 200;
+const int BOX_H = 55;
+const int BOX1_X = 25;
+const int BOX1_Y = 72;
+const int BOX2_X = 255;
+const int BOX2_Y = 72;
+const int BOX3_X = 25;
+const int BOX3_Y = 137;
+const int BOX4_X = 255;
+const int BOX4_Y = 137;
+const int STATUS_X = 25;
+const int STATUS_Y = 205;
+const int STATUS_W = 430;
+const int STATUS_H = 48;
+const int FOOTER_X = 0;
+const int FOOTER_Y = 272;
+const int FOOTER_W = 480;
+const int FOOTER_H = 35;
+const int STAT_BTN_X = 365;
+const int STAT_BTN_Y = 276;
+const int STAT_BTN_W = 95;
+const int STAT_BTN_H = 28;
+
+
+// ======================================================
+// LAYOUT STATS / GRAPH / ALARM KOMPAKT
+// ======================================================
+const int BACK_BTN_X = 350;
+const int BACK_BTN_Y = 265;
+const int BACK_BTN_W = 110;
+const int BACK_BTN_H = 34;
+const int ALARM_BTN_X = 75;
+const int ALARM_BTN_Y = 265;
+const int ALARM_BTN_W = 120;
+const int ALARM_BTN_H = 34;
+const int GRAPH_BTN_X = 210;
+const int GRAPH_BTN_Y = 265;
+const int GRAPH_BTN_W = 120;
+const int GRAPH_BTN_H = 34;
+const int GBTN_Y = 232;
+const int GBTN_H = 28;
+const int GBTN_TEMP_X = 25;
+const int GBTN_HUM_X = 130;
+const int GBTN_PRESS_X = 235;
+const int GBTN_GAS_X = 350;
+const int GBTN_W = 95;
+// ======================================================
+// AKTUELLE SENSORWERTE
+// ======================================================
+float currentTemp = 0.0;
+float currentHum = 0.0;
+float currentPressure = 0.0;
+float currentGas = 0.0;
+bool hasSensorReading = false;
+// ======================================================
+// STATISTIK SEIT START
+// ======================================================
+unsigned long statsCount = 0;
+float sumTemp = 0.0;
+float sumHum = 0.0;
+float sumPressure = 0.0;
+float sumGas = 0.0;
+// ======================================================
+// STATISTIK AUS DATEI
+// ======================================================
+struct AverageStats {
+bool hasData;
+unsigned long count;
+float avgTemp;
+float avgHum;
+float avgPressure;
+float avgGas;
+};
+struct HourlyPoint {
+bool hasData;
+unsigned long hourNumber;
+float avgTemp;
+float avgHum;
+float avgPressure;
+float avgGas;
+};
+// ======================================================
+// HILFSFUNKTIONEN
+// ======================================================
+
+
+void disableDisplay() {
+digitalWrite(TFT_CS, HIGH);
+delayMicroseconds(5);
+}
+void disableTouch() {
+digitalWrite(TOUCH_CS, HIGH);
+delayMicroseconds(5);
+}
+float clampFloat(float value, float minVal, float maxVal) {
+if (value &lt; minVal) return minVal;
+if (value &gt; maxVal) return maxVal;
+return value;
+}
+int mapGasToPercent(float gasKOhm) {
+gasKOhm = clampFloat(gasKOhm, 50.0, 140.0);
+return (int)((gasKOhm - 50.0) * 100.0 / 90.0);
+}
+void mapTouchToScreen(int rawX, int rawY, int &amp;screenX, int &amp;screenY) {
+int x = rawX;
+int y = rawY;
+if (TOUCH_SWAP_XY) {
+int temp = x;
+x = y;
+y = temp;
+}
+screenX = map(x, TOUCH_MIN_X, TOUCH_MAX_X, 0, SCREEN_W - 1);
+screenY = map(y, TOUCH_MIN_Y, TOUCH_MAX_Y, 0, SCREEN_H - 1);
+if (TOUCH_INVERT_X) {
+screenX = (SCREEN_W - 1) - screenX;
+}
+if (TOUCH_INVERT_Y) {
+screenY = (SCREEN_H - 1) - screenY;
+}
+screenX = screenX + TOUCH_OFFSET_X;
+screenY = screenY + TOUCH_OFFSET_Y;
+screenX = constrain(screenX, 0, SCREEN_W - 1);
+screenY = constrain(screenY, 0, SCREEN_H - 1);
+}
+bool isInside(int x, int y, int bx, int by, int bw, int bh) {
+return (x &gt;= bx &amp;&amp; x &lt;= bx + bw &amp;&amp; y &gt;= by &amp;&amp; y &lt;= by + bh);
+}
+void showStartupMessage(const char* msg, uint16_t color) {
+disableTouch();
+display.fillScreen(BLACK);
+display.setTextColor(color, BLACK);
+display.setTextSize(3);
+display.setCursor(35, 135);
+display.print(msg);
+}
+// ======================================================
+// CSV HELPER
+// ======================================================
+String getCsvField(String line, int index) {
+int currentIndex = 0;
+int start = 0;
+for (int i = 0; i &lt;= line.length(); i++) {
+if (i == line.length() || line.charAt(i) == &#x27;;&#x27;) {
+if (currentIndex == index) {
+
+
+return line.substring(start, i);
+}
+currentIndex++;
+start = i + 1;
+}
+}
+return &quot;&quot;;
+}
+bool parseLogLine(String line, unsigned long &amp;epoch, float &amp;temp, float &amp;hum, float &amp;pressure, float &amp;gas) {
+line.trim();
+if (line.length() &lt; 5) return false;
+if (line.startsWith(&quot;epoch&quot;)) return false;
+String f0 = getCsvField(line, 0);
+String f1 = getCsvField(line, 1);
+String f2 = getCsvField(line, 2);
+String f3 = getCsvField(line, 3);
+String f4 = getCsvField(line, 4);
+if (f0.length() == 0 || f1.length() == 0 || f2.length() == 0 || f3.length() == 0 || f4.length() == 0) return false;
+epoch = strtoul(f0.c_str(), NULL, 10);
+temp = f1.toFloat();
+hum = f2.toFloat();
+pressure = f3.toFloat();
+gas = f4.toFloat();
+return true;
+}
+bool parseAlarmLine(String line, unsigned long &amp;epoch, float &amp;temp, float &amp;hum, float &amp;pressure, float &amp;gas, String &amp;status) {
+line.trim();
+if (line.length() &lt; 5) return false;
+if (line.startsWith(&quot;epoch&quot;)) return false;
+String f0 = getCsvField(line, 0);
+String f1 = getCsvField(line, 1);
+String f2 = getCsvField(line, 2);
+String f3 = getCsvField(line, 3);
+String f4 = getCsvField(line, 4);
+String f5 = getCsvField(line, 5);
+if (f0.length() == 0 || f1.length() == 0 || f2.length() == 0 || f3.length() == 0 || f4.length() == 0) return false;
+epoch = strtoul(f0.c_str(), NULL, 10);
+temp = f1.toFloat();
+hum = f2.toFloat();
+pressure = f3.toFloat();
+gas = f4.toFloat();
+status = f5;
+return true;
+}
+unsigned long getHourNumber(unsigned long epoch) {
+return epoch / 3600UL;
+}
+// ======================================================
+// LITTLEFS
+// ======================================================
+void initStorage() {
+if (!LittleFS.begin(true)) {
+Serial.println(&quot;LittleFS konnte nicht gestartet werden.&quot;);
+return;
+}
+Serial.println(&quot;LittleFS gestartet.&quot;);
+if (!LittleFS.exists(LOG_FILE)) {
+File file = LittleFS.open(LOG_FILE, FILE_WRITE);
+if (file) {
+file.println(&quot;epoch;temp;hum;pressure;gas&quot;);
+
+
+file.close();
+Serial.println(&quot;Mess-Logdatei erstellt.&quot;);
+}
+}
+if (!LittleFS.exists(ALARM_FILE)) {
+File file = LittleFS.open(ALARM_FILE, FILE_WRITE);
+if (file) {
+file.println(&quot;epoch;temp;hum;pressure;gas;status&quot;);
+file.close();
+Serial.println(&quot;Alarm-Logdatei erstellt.&quot;);
+}
+}
+}
+void saveMeasurementToLog() {
+if (!hasSensorReading) return;
+DateTime now = rtc.now();
+unsigned long epoch = now.unixtime();
+File file = LittleFS.open(LOG_FILE, FILE_APPEND);
+if (!file) {
+Serial.println(&quot;Logdatei konnte nicht geoeffnet werden.&quot;);
+return;
+}
+file.print(epoch);
+file.print(&quot;;&quot;);
+file.print(currentTemp, 2);
+file.print(&quot;;&quot;);
+file.print(currentHum, 2);
+file.print(&quot;;&quot;);
+file.print(currentPressure, 2);
+file.print(&quot;;&quot;);
+file.println(currentGas, 2);
+file.close();
+Serial.println(&quot;Messwert gespeichert.&quot;);
+}
+void saveAlarmToLog(const char* statusText) {
+if (!hasSensorReading) return;
+DateTime now = rtc.now();
+unsigned long epoch = now.unixtime();
+File file = LittleFS.open(ALARM_FILE, FILE_APPEND);
+if (!file) {
+Serial.println(&quot;Alarmdatei konnte nicht geoeffnet werden.&quot;);
+return;
+}
+file.print(epoch);
+file.print(&quot;;&quot;);
+file.print(currentTemp, 2);
+file.print(&quot;;&quot;);
+file.print(currentHum, 2);
+file.print(&quot;;&quot;);
+file.print(currentPressure, 2);
+file.print(&quot;;&quot;);
+file.print(currentGas, 2);
+file.print(&quot;;&quot;);
+file.println(statusText);
+file.close();
+alarmLogNeedsRefresh = true;
+Serial.println(&quot;Alarmereignis gespeichert.&quot;);
+}
+void pruneOldLogEntries() {
+DateTime now = rtc.now();
+unsigned long nowEpoch = now.unixtime();
+
+
+if (!LittleFS.exists(LOG_FILE)) return;
+File input = LittleFS.open(LOG_FILE, FILE_READ);
+File output = LittleFS.open(&quot;/temp_log.csv&quot;, FILE_WRITE);
+if (!input || !output) {
+Serial.println(&quot;Prune Messlog fehlgeschlagen.&quot;);
+if (input) input.close();
+if (output) output.close();
+return;
+}
+output.println(&quot;epoch;temp;hum;pressure;gas&quot;);
+while (input.available()) {
+String line = input.readStringUntil(&#x27;\n&#x27;);
+line.trim();
+unsigned long epoch;
+float temp, hum, pressure, gas;
+if (parseLogLine(line, epoch, temp, hum, pressure, gas)) {
+if (epoch &lt;= nowEpoch &amp;&amp; nowEpoch - epoch &lt;= STORAGE_RETENTION_SECONDS) {
+output.println(line);
+}
+}
+}
+input.close();
+output.close();
+LittleFS.remove(LOG_FILE);
+LittleFS.rename(&quot;/temp_log.csv&quot;, LOG_FILE);
+Serial.println(&quot;Alte Mess-Logeintraege entfernt.&quot;);
+}
+void pruneOldAlarmEntries() {
+DateTime now = rtc.now();
+unsigned long nowEpoch = now.unixtime();
+if (!LittleFS.exists(ALARM_FILE)) return;
+File input = LittleFS.open(ALARM_FILE, FILE_READ);
+File output = LittleFS.open(&quot;/temp_alarm.csv&quot;, FILE_WRITE);
+if (!input || !output) {
+Serial.println(&quot;Prune Alarmlog fehlgeschlagen.&quot;);
+if (input) input.close();
+if (output) output.close();
+return;
+}
+output.println(&quot;epoch;temp;hum;pressure;gas;status&quot;);
+while (input.available()) {
+String line = input.readStringUntil(&#x27;\n&#x27;);
+line.trim();
+unsigned long epoch;
+float temp, hum, pressure, gas;
+String status;
+if (parseAlarmLine(line, epoch, temp, hum, pressure, gas, status)) {
+if (epoch &lt;= nowEpoch &amp;&amp; nowEpoch - epoch &lt;= STORAGE_RETENTION_SECONDS) {
+output.println(line);
+}
+}
+}
+input.close();
+output.close();
+LittleFS.remove(ALARM_FILE);
+LittleFS.rename(&quot;/temp_alarm.csv&quot;, ALARM_FILE);
+
+
+Serial.println(&quot;Alte Alarm-Logeintraege entfernt.&quot;);
+}
+// ======================================================
+// STATISTIK AUS LOG
+// ======================================================
+AverageStats makeEmptyAverageStats() {
+AverageStats result;
+result.hasData = false;
+result.count = 0;
+result.avgTemp = 0;
+result.avgHum = 0;
+result.avgPressure = 0;
+result.avgGas = 0;
+return result;
+}
+AverageStats calculateAverageForRange(unsigned long fromEpoch, unsigned long toEpoch) {
+AverageStats result = makeEmptyAverageStats();
+float sTemp = 0;
+float sHum = 0;
+float sPressure = 0;
+float sGas = 0;
+File file = LittleFS.open(LOG_FILE, FILE_READ);
+if (!file) return result;
+while (file.available()) {
+String line = file.readStringUntil(&#x27;\n&#x27;);
+line.trim();
+unsigned long epoch;
+float temp, hum, pressure, gas;
+if (parseLogLine(line, epoch, temp, hum, pressure, gas)) {
+if (epoch &gt;= fromEpoch &amp;&amp; epoch &lt;= toEpoch) {
+sTemp += temp;
+sHum += hum;
+sPressure += pressure;
+sGas += gas;
+result.count++;
+}
+}
+}
+file.close();
+if (result.count &gt; 0) {
+result.hasData = true;
+result.avgTemp = sTemp / result.count;
+result.avgHum = sHum / result.count;
+result.avgPressure = sPressure / result.count;
+result.avgGas = sGas / result.count;
+}
+return result;
+}
+AverageStats calculateTodayAverage() {
+DateTime now = rtc.now();
+DateTime startOfDay(now.year(), now.month(), now.day(), 0, 0, 0);
+return calculateAverageForRange(startOfDay.unixtime(), now.unixtime());
+}
+AverageStats calculateLast24HoursAverage() {
+DateTime now = rtc.now();
+unsigned long nowEpoch = now.unixtime();
+unsigned long fromEpoch = nowEpoch - LAST_24H_SECONDS;
+return calculateAverageForRange(fromEpoch, nowEpoch);
+}
+void calculateHourlyPoints(HourlyPoint points[24]) {
+
+
+for (int i = 0; i &lt; 24; i++) {
+points[i].hasData = false;
+points[i].hourNumber = 0;
+points[i].avgTemp = 0;
+points[i].avgHum = 0;
+points[i].avgPressure = 0;
+points[i].avgGas = 0;
+}
+DateTime now = rtc.now();
+unsigned long currentHour = getHourNumber(now.unixtime());
+float sumTemp[24];
+float sumHum[24];
+float sumPressure[24];
+float sumGas[24];
+unsigned long count[24];
+for (int i = 0; i &lt; 24; i++) {
+sumTemp[i] = 0;
+sumHum[i] = 0;
+sumPressure[i] = 0;
+sumGas[i] = 0;
+count[i] = 0;
+unsigned long hourNum = currentHour - (23 - i);
+points[i].hourNumber = hourNum;
+}
+File file = LittleFS.open(LOG_FILE, FILE_READ);
+if (!file) return;
+while (file.available()) {
+String line = file.readStringUntil(&#x27;\n&#x27;);
+line.trim();
+unsigned long epoch;
+float temp, hum, pressure, gas;
+if (parseLogLine(line, epoch, temp, hum, pressure, gas)) {
+unsigned long hourNum = getHourNumber(epoch);
+for (int i = 0; i &lt; 24; i++) {
+if (points[i].hourNumber == hourNum) {
+sumTemp[i] += temp;
+sumHum[i] += hum;
+sumPressure[i] += pressure;
+sumGas[i] += gas;
+count[i]++;
+break;
+}
+}
+}
+}
+file.close();
+for (int i = 0; i &lt; 24; i++) {
+if (count[i] &gt; 0) {
+points[i].hasData = true;
+points[i].avgTemp = sumTemp[i] / count[i];
+points[i].avgHum = sumHum[i] / count[i];
+points[i].avgPressure = sumPressure[i] / count[i];
+points[i].avgGas = sumGas[i] / count[i];
+}
+}
+}
+float getGraphValue(HourlyPoint p, GraphMode mode) {
+if (mode == GRAPH_TEMP) return p.avgTemp;
+if (mode == GRAPH_HUM) return p.avgHum;
+if (mode == GRAPH_PRESSURE) return p.avgPressure;
+if (mode == GRAPH_GAS) return p.avgGas;
+return 0;
+}
+
+
+const char* getGraphTitle(GraphMode mode) {
+if (mode == GRAPH_TEMP) return &quot;Temperatur&quot;;
+if (mode == GRAPH_HUM) return &quot;Feuchte&quot;;
+if (mode == GRAPH_PRESSURE) return &quot;Druck&quot;;
+if (mode == GRAPH_GAS) return &quot;Gas&quot;;
+return &quot;&quot;;
+}
+const char* getGraphUnit(GraphMode mode) {
+if (mode == GRAPH_TEMP) return &quot;C&quot;;
+if (mode == GRAPH_HUM) return &quot;%&quot;;
+if (mode == GRAPH_PRESSURE) return &quot;hPa&quot;;
+if (mode == GRAPH_GAS) return &quot;KOhm&quot;;
+return &quot;&quot;;
+}
+uint16_t getGraphColor(GraphMode mode) {
+if (mode == GRAPH_TEMP) return ORANGE;
+if (mode == GRAPH_HUM) return CYAN;
+if (mode == GRAPH_PRESSURE) return MAGENTA;
+if (mode == GRAPH_GAS) return GREEN;
+return WHITE;
+}
+// ======================================================
+// MAIN SCREEN
+// ======================================================
+void drawHeader() {
+disableTouch();
+display.fillRect(HEADER_X, HEADER_Y, HEADER_W, HEADER_H, NAVY);
+display.drawRoundRect(HEADER_X, HEADER_Y, HEADER_W, HEADER_H, 7, WHITE);
+display.setTextColor(WHITE, NAVY);
+display.setTextSize(3);
+display.setCursor(25, 28);
+display.print(&quot;Umweltstation&quot;);
+display.setTextSize(2);
+display.setCursor(345, 27);
+display.print(&quot;--:--:--&quot;);
+display.setTextSize(1);
+display.setCursor(350, 49);
+display.print(&quot;--.--.----&quot;);
+}
+void updateClock() {
+if (currentScreen != SCREEN_MAIN) return;
+DateTime now = rtc.now();
+disableTouch();
+display.fillRect(335, 23, 125, 34, NAVY);
+display.setTextColor(WHITE, NAVY);
+display.setTextSize(2);
+display.setCursor(345, 27);
+if (now.hour() &lt; 10) display.print(&quot;0&quot;);
+display.print(now.hour());
+display.print(&quot;:&quot;);
+if (now.minute() &lt; 10) display.print(&quot;0&quot;);
+display.print(now.minute());
+display.print(&quot;:&quot;);
+if (now.second() &lt; 10) display.print(&quot;0&quot;);
+display.print(now.second());
+display.setTextSize(1);
+display.setCursor(350, 49);
+if (now.day() &lt; 10) display.print(&quot;0&quot;);
+display.print(now.day());
+display.print(&quot;.&quot;);
+if (now.month() &lt; 10) display.print(&quot;0&quot;);
+display.print(now.month());
+display.print(&quot;.&quot;);
+display.print(now.year());
+}
+void drawBox(int x, int y, int w, int h, uint16_t borderColor, const char* title, uint16_t titleColor) {
+disableTouch();
+
+
+display.drawRoundRect(x, y, w, h, 8, borderColor);
+display.fillRoundRect(x + 2, y + 2, w - 4, h - 4, 8, DARKGRAY);
+display.setTextColor(titleColor, DARKGRAY);
+display.setTextSize(2);
+display.setCursor(x + 10, y + 7);
+display.print(title);
+}
+void drawStatButton() {
+disableTouch();
+display.fillRoundRect(STAT_BTN_X, STAT_BTN_Y, STAT_BTN_W, STAT_BTN_H, 8, CYAN);
+display.drawRoundRect(STAT_BTN_X, STAT_BTN_Y, STAT_BTN_W, STAT_BTN_H, 8, WHITE);
+display.setTextColor(BLACK, CYAN);
+display.setTextSize(2);
+display.setCursor(STAT_BTN_X + 18, STAT_BTN_Y + 7);
+display.print(&quot;STAT&quot;);
+}
+void drawStaticUI() {
+disableTouch();
+display.fillScreen(BLACK);
+drawHeader();
+drawBox(BOX1_X, BOX1_Y, BOX_W, BOX_H, ORANGE, &quot;Temperatur&quot;, ORANGE);
+drawBox(BOX2_X, BOX2_Y, BOX_W, BOX_H, CYAN, &quot;Feuchte&quot;, CYAN);
+drawBox(BOX3_X, BOX3_Y, BOX_W, BOX_H, MAGENTA, &quot;Druck&quot;, MAGENTA);
+drawBox(BOX4_X, BOX4_Y, BOX_W, BOX_H, GREEN, &quot;Gas&quot;, GREEN);
+display.drawRoundRect(STATUS_X, STATUS_Y, STATUS_W, STATUS_H, 10, WHITE);
+display.fillRoundRect(STATUS_X + 2, STATUS_Y + 2, STATUS_W - 4, STATUS_H - 4, 10, DARKGRAY);
+display.setTextColor(WHITE, DARKGRAY);
+display.setTextSize(2);
+display.setCursor(35, 216);
+display.print(&quot;Luftstatus:&quot;);
+display.fillRect(FOOTER_X, FOOTER_Y, FOOTER_W, FOOTER_H, NAVY);
+display.setTextColor(WHITE, NAVY);
+display.setTextSize(2);
+display.setCursor(18, 282);
+display.print(&quot;System aktiv&quot;);
+drawStatButton();
+}
+void updateValueBox(int x, int y, float value, const char* unit) {
+disableTouch();
+display.fillRect(x + 10, y + 29, 175, 22, DARKGRAY);
+display.setTextColor(WHITE, DARKGRAY);
+display.setTextSize(2);
+display.setCursor(x + 10, y + 32);
+display.print(value, 1);
+display.print(&quot; &quot;);
+display.print(unit);
+}
+void updateStatus(float gasKOhm) {
+disableTouch();
+const char* statusText;
+uint16_t statusColor;
+int percent = mapGasToPercent(gasKOhm);
+if (gasKOhm &gt;= GAS_MEDIUM_THRESHOLD) {
+statusText = &quot;Gut&quot;;
+statusColor = GREEN;
+} else if (gasKOhm &gt;= GAS_BAD_THRESHOLD) {
+statusText = &quot;Mittel&quot;;
+statusColor = YELLOW;
+} else {
+statusText = &quot;Schlecht&quot;;
+statusColor = RED;
+}
+display.fillRect(170, 213, 130, 22, DARKGRAY);
+display.setTextColor(statusColor, DARKGRAY);
+display.setTextSize(2);
+display.setCursor(170, 216);
+display.print(statusText);
+display.fillRect(35, 242, 390, 12, BLACK);
+
+
+display.drawRect(35, 242, 390, 12, WHITE);
+int barWidth = map(percent, 0, 100, 0, 388);
+display.fillRect(36, 243, barWidth, 10, statusColor);
+display.fillRect(305, 213, 120, 22, DARKGRAY);
+display.setTextColor(WHITE, DARKGRAY);
+display.setTextSize(2);
+display.setCursor(305, 216);
+display.print(percent);
+display.print(&quot;%&quot;);
+}
+void updateFooterStatus() {
+if (currentScreen != SCREEN_MAIN) return;
+disableTouch();
+display.fillRect(220, FOOTER_Y, 135, FOOTER_H, NAVY);
+display.setTextSize(2);
+display.setCursor(225, 282);
+if (airBad &amp;&amp; alarmMuted) {
+display.setTextColor(YELLOW, NAVY);
+display.print(&quot;Quittiert&quot;);
+} else if (airBad) {
+display.setTextColor(RED, NAVY);
+display.print(&quot;ALARM!&quot;);
+} else {
+display.setTextColor(WHITE, NAVY);
+display.print(&quot;Update OK&quot;);
+}
+drawStatButton();
+}
+void updateMainMeasurementDisplay() {
+if (currentScreen != SCREEN_MAIN) return;
+if (!hasSensorReading) return;
+updateValueBox(BOX1_X, BOX1_Y, currentTemp, &quot;C&quot;);
+updateValueBox(BOX2_X, BOX2_Y, currentHum, &quot;%&quot;);
+updateValueBox(BOX3_X, BOX3_Y, currentPressure, &quot;hPa&quot;);
+updateValueBox(BOX4_X, BOX4_Y, currentGas, &quot;KOhm&quot;);
+updateStatus(currentGas);
+updateFooterStatus();
+}
+// ======================================================
+// STATS SCREEN
+// ======================================================
+void drawBackButton() {
+disableTouch();
+display.fillRoundRect(BACK_BTN_X, BACK_BTN_Y, BACK_BTN_W, BACK_BTN_H, 8, ORANGE);
+display.drawRoundRect(BACK_BTN_X, BACK_BTN_Y, BACK_BTN_W, BACK_BTN_H, 8, WHITE);
+display.setTextColor(BLACK, ORANGE);
+display.setTextSize(2);
+display.setCursor(BACK_BTN_X + 13, BACK_BTN_Y + 9);
+display.print(&quot;ZURUECK&quot;);
+}
+void drawGraphButton() {
+disableTouch();
+display.fillRoundRect(GRAPH_BTN_X, GRAPH_BTN_Y, GRAPH_BTN_W, GRAPH_BTN_H, 8, CYAN);
+display.drawRoundRect(GRAPH_BTN_X, GRAPH_BTN_Y, GRAPH_BTN_W, GRAPH_BTN_H, 8, WHITE);
+display.setTextColor(BLACK, CYAN);
+display.setTextSize(2);
+display.setCursor(GRAPH_BTN_X + 24, GRAPH_BTN_Y + 9);
+display.print(&quot;GRAPH&quot;);
+}
+void drawAlarmButton() {
+disableTouch();
+display.fillRoundRect(ALARM_BTN_X, ALARM_BTN_Y, ALARM_BTN_W, ALARM_BTN_H, 8, RED);
+display.drawRoundRect(ALARM_BTN_X, ALARM_BTN_Y, ALARM_BTN_W, ALARM_BTN_H, 8, WHITE);
+display.setTextColor(WHITE, RED);
+display.setTextSize(2);
+display.setCursor(ALARM_BTN_X + 18, ALARM_BTN_Y + 9);
+display.print(&quot;ALARME&quot;);
+}
+
+
+void printAverageBlock(int x, int y, const char* title, AverageStats stats) {
+display.setTextColor(CYAN, BLACK);
+display.setTextSize(2);
+display.setCursor(x, y);
+display.print(title);
+display.setTextColor(WHITE, BLACK);
+if (!stats.hasData) {
+display.setCursor(x, y + 28);
+display.print(&quot;Keine Daten&quot;);
+return;
+}
+display.setCursor(x, y + 28);
+display.print(&quot;T:&quot;); display.print(stats.avgTemp, 1); display.print(&quot;C&quot;);
+display.setCursor(x, y + 52);
+display.print(&quot;F:&quot;); display.print(stats.avgHum, 1); display.print(&quot;%&quot;);
+display.setCursor(x, y + 76);
+display.print(&quot;D:&quot;); display.print(stats.avgPressure, 0); display.print(&quot;hPa&quot;);
+display.setCursor(x, y + 100);
+display.print(&quot;G:&quot;); display.print(stats.avgGas, 1); display.print(&quot;K&quot;);
+}
+void drawStatsScreen() {
+disableTouch();
+display.fillScreen(BLACK);
+display.drawRect(10, 14, 460, 288, WHITE);
+display.fillRect(10, 14, 460, 42, NAVY);
+display.setTextColor(WHITE, NAVY);
+display.setTextSize(3);
+display.setCursor(25, 23);
+display.print(&quot;Statistik&quot;);
+AverageStats todayStats = calculateTodayAverage();
+AverageStats last24Stats = calculateLast24HoursAverage();
+printAverageBlock(30, 75, &quot;Heute&quot;, todayStats);
+printAverageBlock(255, 75, &quot;24h&quot;, last24Stats);
+display.setTextColor(YELLOW, BLACK);
+display.setTextSize(2);
+display.setCursor(30, 233);
+display.print(&quot;Log: &quot;);
+if (last24Stats.hasData) {
+display.print(last24Stats.count);
+display.print(&quot; Werte&quot;);
+} else {
+display.print(&quot;leer&quot;);
+}
+drawAlarmButton();
+drawGraphButton();
+drawBackButton();
+}
+// ======================================================
+// ALARM LOG SCREEN
+// ======================================================
+void drawAlarmLogScreen() {
+disableTouch();
+display.fillScreen(BLACK);
+display.drawRect(10, 14, 460, 288, WHITE);
+display.fillRect(10, 14, 460, 42, RED);
+display.setTextColor(WHITE, RED);
+display.setTextSize(2);
+display.setCursor(25, 27);
+display.print(&quot;Alarm-Protokoll&quot;);
+String lines[5];
+int lineCount = 0;
+File file = LittleFS.open(ALARM_FILE, FILE_READ);
+if (file) {
+while (file.available()) {
+String line = file.readStringUntil(&#x27;\n&#x27;);
+line.trim();
+if (line.length() == 0 || line.startsWith(&quot;epoch&quot;)) continue;
+if (lineCount &lt; 5) {
+
+
+lines[lineCount] = line;
+lineCount++;
+} else {
+for (int i = 0; i &lt; 4; i++) lines[i] = lines[i + 1];
+lines[4] = line;
+}
+}
+file.close();
+}
+if (lineCount == 0) {
+display.setTextColor(YELLOW, BLACK);
+display.setTextSize(2);
+display.setCursor(45, 130);
+display.print(&quot;Keine Alarme gespeichert&quot;);
+drawBackButton();
+return;
+}
+int startY = 65;
+int rowH = 38;
+for (int i = 0; i &lt; lineCount; i++) {
+unsigned long epoch;
+float temp, hum, pressure, gas;
+String status;
+if (!parseAlarmLine(lines[i], epoch, temp, hum, pressure, gas, status)) continue;
+DateTime dt(epoch);
+int y = startY + i * rowH;
+display.drawFastHLine(25, y - 5, 425, DARKGRAY);
+display.setTextSize(1);
+display.setTextColor(RED, BLACK);
+display.setCursor(25, y);
+if (dt.day() &lt; 10) display.print(&quot;0&quot;);
+display.print(dt.day());
+display.print(&quot;.&quot;);
+if (dt.month() &lt; 10) display.print(&quot;0&quot;);
+display.print(dt.month());
+display.print(&quot; &quot;);
+if (dt.hour() &lt; 10) display.print(&quot;0&quot;);
+display.print(dt.hour());
+display.print(&quot;:&quot;);
+if (dt.minute() &lt; 10) display.print(&quot;0&quot;);
+display.print(dt.minute());
+display.setTextColor(WHITE, BLACK);
+display.setCursor(115, y);
+display.print(&quot;Gas:&quot;); display.print(gas, 1); display.print(&quot;K&quot;);
+display.setCursor(210, y);
+display.print(&quot;T:&quot;); display.print(temp, 1); display.print(&quot;C&quot;);
+display.setCursor(290, y);
+display.print(&quot;F:&quot;); display.print(hum, 1); display.print(&quot;%&quot;);
+display.setCursor(370, y);
+display.print(status);
+}
+drawBackButton();
+}
+// ======================================================
+// GRAPH SCREEN
+// ======================================================
+void drawGraphModeButton(int x, const char* label, GraphMode mode) {
+uint16_t fillColor = DARKGRAY;
+if (currentGraphMode == mode) fillColor = getGraphColor(mode);
+display.fillRoundRect(x, GBTN_Y, GBTN_W, GBTN_H, 7, fillColor);
+display.drawRoundRect(x, GBTN_Y, GBTN_W, GBTN_H, 7, WHITE);
+if (currentGraphMode == mode) {
+display.setTextColor(BLACK, fillColor);
+} else {
+display.setTextColor(WHITE, fillColor);
+}
+display.setTextSize(1);
+display.setCursor(x + 15, GBTN_Y + 10);
+
+
+display.print(label);
+}
+void drawGraphButtons() {
+disableTouch();
+drawGraphModeButton(GBTN_TEMP_X, &quot;TEMP&quot;, GRAPH_TEMP);
+drawGraphModeButton(GBTN_HUM_X, &quot;FEUCHTE&quot;, GRAPH_HUM);
+drawGraphModeButton(GBTN_PRESS_X, &quot;DRUCK&quot;, GRAPH_PRESSURE);
+drawGraphModeButton(GBTN_GAS_X, &quot;GAS&quot;, GRAPH_GAS);
+}
+void drawGraphScreen() {
+disableTouch();
+display.fillScreen(BLACK);
+display.drawRect(10, 14, 460, 288, WHITE);
+display.fillRect(10, 14, 460, 42, NAVY);
+display.setTextColor(WHITE, NAVY);
+display.setTextSize(2);
+display.setCursor(25, 26);
+display.print(&quot;24h Verlauf: &quot;);
+display.print(getGraphTitle(currentGraphMode));
+HourlyPoint points[24];
+calculateHourlyPoints(points);
+int gx = 58;
+int gy = 78;
+int gw = 355;
+int gh = 130;
+display.drawRect(gx, gy, gw, gh, WHITE);
+bool hasAny = false;
+float minValue = 100000;
+float maxValue = -100000;
+for (int i = 0; i &lt; 24; i++) {
+if (points[i].hasData) {
+float value = getGraphValue(points[i], currentGraphMode);
+hasAny = true;
+if (value &lt; minValue) minValue = value;
+if (value &gt; maxValue) maxValue = value;
+}
+}
+if (!hasAny) {
+display.setTextColor(YELLOW, BLACK);
+display.setTextSize(2);
+display.setCursor(90, 135);
+display.print(&quot;Noch keine Logdaten&quot;);
+drawGraphButtons();
+drawBackButton();
+return;
+}
+if (maxValue - minValue &lt; 1.0) {
+maxValue += 0.5;
+minValue -= 0.5;
+}
+uint16_t graphColor = getGraphColor(currentGraphMode);
+display.setTextColor(CYAN, BLACK);
+display.setTextSize(1);
+display.setCursor(12, gy);
+display.print(maxValue, 1);
+display.print(getGraphUnit(currentGraphMode));
+display.setCursor(12, gy + gh - 8);
+display.print(minValue, 1);
+display.print(getGraphUnit(currentGraphMode));
+for (int i = 1; i &lt; 4; i++) {
+int yy = gy + (gh * i / 4);
+for (int x = gx + 1; x &lt; gx + gw - 1; x += 12) {
+display.drawFastHLine(x, yy, 6, DARKGRAY);
+
+
+}
+}
+int lastX = -1;
+int lastY = -1;
+for (int i = 0; i &lt; 24; i++) {
+int px = gx + map(i, 0, 23, 6, gw - 6);
+if (points[i].hasData) {
+float value = getGraphValue(points[i], currentGraphMode);
+int py = gy + gh - 1 - (int)((value - minValue) * (gh - 12) / (maxValue - minValue));
+py = constrain(py, gy + 6, gy + gh - 6);
+display.fillCircle(px, py, 3, graphColor);
+if (lastX &gt;= 0) display.drawLine(lastX, lastY, px, py, YELLOW);
+lastX = px;
+lastY = py;
+}
+}
+display.setTextColor(WHITE, BLACK);
+display.setTextSize(2);
+display.setCursor(58, 212);
+display.print(getGraphTitle(currentGraphMode));
+display.print(&quot; in &quot;);
+display.print(getGraphUnit(currentGraphMode));
+drawGraphButtons();
+drawBackButton();
+}
+// ======================================================
+// BUTTON + BUZZER
+// ======================================================
+void handleButton() {
+bool buttonPressed = (digitalRead(BUTTON_PIN) == LOW);
+if (buttonPressed &amp;&amp; millis() - lastButtonPress &gt; debounceDelay) {
+lastButtonPress = millis();
+if (airBad) {
+alarmMuted = !alarmMuted;
+if (alarmMuted) {
+Serial.println(&quot;Alarm quittiert.&quot;);
+digitalWrite(BUZZER_PIN, LOW);
+buzzerState = false;
+} else {
+Serial.println(&quot;Alarm wieder aktiviert.&quot;);
+}
+updateFooterStatus();
+} else {
+Serial.println(&quot;Button gedrueckt, aber kein Alarm aktiv.&quot;);
+}
+}
+}
+void handleBuzzer() {
+if (!airBad || alarmMuted) {
+digitalWrite(BUZZER_PIN, LOW);
+buzzerState = false;
+return;
+}
+if (millis() - lastBuzzerToggle &gt;= buzzerInterval) {
+lastBuzzerToggle = millis();
+buzzerState = !buzzerState;
+digitalWrite(BUZZER_PIN, buzzerState ? HIGH : LOW);
+}
+}
+// ======================================================
+// TOUCH HANDLING
+// ======================================================
+void handleTouch() {
+disableDisplay();
+if (!touch.touched()) return;
+if (millis() - lastTouchAction &lt; touchDebounceDelay) return;
+
+
+TS_Point p = touch.getPoint();
+int screenX, screenY;
+mapTouchToScreen(p.x, p.y, screenX, screenY);
+Serial.print(&quot;Touch screen x=&quot;);
+Serial.print(screenX);
+Serial.print(&quot; y=&quot;);
+Serial.print(screenY);
+Serial.print(&quot; raw z=&quot;);
+Serial.println(p.z);
+if (currentScreen == SCREEN_MAIN) {
+if (isInside(screenX, screenY, STAT_BTN_X, STAT_BTN_Y, STAT_BTN_W, STAT_BTN_H)) {
+lastTouchAction = millis();
+currentScreen = SCREEN_STATS;
+statsNeedsRefresh = false;
+drawStatsScreen();
+return;
+}
+}
+if (currentScreen == SCREEN_STATS) {
+if (isInside(screenX, screenY, ALARM_BTN_X, ALARM_BTN_Y, ALARM_BTN_W, ALARM_BTN_H)) {
+lastTouchAction = millis();
+currentScreen = SCREEN_ALARMS;
+alarmLogNeedsRefresh = false;
+drawAlarmLogScreen();
+return;
+}
+if (isInside(screenX, screenY, GRAPH_BTN_X, GRAPH_BTN_Y, GRAPH_BTN_W, GRAPH_BTN_H)) {
+lastTouchAction = millis();
+currentScreen = SCREEN_GRAPH;
+graphNeedsRefresh = false;
+drawGraphScreen();
+return;
+}
+if (isInside(screenX, screenY, BACK_BTN_X, BACK_BTN_Y, BACK_BTN_W, BACK_BTN_H)) {
+lastTouchAction = millis();
+currentScreen = SCREEN_MAIN;
+drawStaticUI();
+updateClock();
+updateMainMeasurementDisplay();
+return;
+}
+}
+if (currentScreen == SCREEN_GRAPH) {
+if (isInside(screenX, screenY, GBTN_TEMP_X, GBTN_Y, GBTN_W, GBTN_H)) {
+lastTouchAction = millis();
+currentGraphMode = GRAPH_TEMP;
+graphNeedsRefresh = false;
+drawGraphScreen();
+return;
+}
+if (isInside(screenX, screenY, GBTN_HUM_X, GBTN_Y, GBTN_W, GBTN_H)) {
+lastTouchAction = millis();
+currentGraphMode = GRAPH_HUM;
+graphNeedsRefresh = false;
+drawGraphScreen();
+return;
+}
+if (isInside(screenX, screenY, GBTN_PRESS_X, GBTN_Y, GBTN_W, GBTN_H)) {
+lastTouchAction = millis();
+currentGraphMode = GRAPH_PRESSURE;
+graphNeedsRefresh = false;
+drawGraphScreen();
+return;
+}
+
+
+if (isInside(screenX, screenY, GBTN_GAS_X, GBTN_Y, GBTN_W, GBTN_H)) {
+lastTouchAction = millis();
+currentGraphMode = GRAPH_GAS;
+graphNeedsRefresh = false;
+drawGraphScreen();
+return;
+}
+if (isInside(screenX, screenY, BACK_BTN_X, BACK_BTN_Y, BACK_BTN_W, BACK_BTN_H)) {
+lastTouchAction = millis();
+currentScreen = SCREEN_STATS;
+statsNeedsRefresh = false;
+drawStatsScreen();
+return;
+}
+}
+if (currentScreen == SCREEN_ALARMS) {
+if (isInside(screenX, screenY, BACK_BTN_X, BACK_BTN_Y, BACK_BTN_W, BACK_BTN_H)) {
+lastTouchAction = millis();
+currentScreen = SCREEN_STATS;
+statsNeedsRefresh = false;
+drawStatsScreen();
+return;
+}
+}
+}
+// ======================================================
+// SENSOR UPDATE
+// ======================================================
+void updateSensorData() {
+if (!bme.performReading()) {
+Serial.println(&quot;Messung fehlgeschlagen!&quot;);
+if (currentScreen == SCREEN_MAIN) {
+disableTouch();
+display.fillRect(220, FOOTER_Y, 135, FOOTER_H, NAVY);
+display.setTextColor(RED, NAVY);
+display.setTextSize(2);
+display.setCursor(225, 282);
+display.print(&quot;Messfehler&quot;);
+}
+return;
+}
+currentTemp = bme.temperature + TEMP_OFFSET;
+currentHum = bme.humidity;
+currentPressure = (bme.pressure / 100.0) + PRESSURE_OFFSET;
+currentGas = bme.gas_resistance / 1000.0;
+hasSensorReading = true;
+sumTemp += currentTemp;
+sumHum += currentHum;
+sumPressure += currentPressure;
+sumGas += currentGas;
+statsCount++;
+if (FORCE_ALARM_TEST) {
+airBad = true;
+} else {
+airBad = currentGas &lt; GAS_BAD_THRESHOLD;
+}
+if (airBad &amp;&amp; !lastAirBadState) {
+saveAlarmToLog(&quot;Schlecht&quot;);
+}
+lastAirBadState = airBad;
+if (!airBad) {
+
+
+alarmMuted = false;
+}
+Serial.println(&quot;------ Umweltwerte ------&quot;);
+Serial.print(&quot;Temperatur kalibriert: &quot;); Serial.print(currentTemp); Serial.println(&quot; C&quot;);
+Serial.print(&quot;Feuchtigkeit: &quot;); Serial.print(currentHum); Serial.println(&quot; %&quot;);
+Serial.print(&quot;Druck: &quot;); Serial.print(currentPressure); Serial.println(&quot; hPa&quot;);
+Serial.print(&quot;Gas: &quot;); Serial.print(currentGas); Serial.println(&quot; KOhm&quot;);
+Serial.print(&quot;Luftqualitaet: &quot;);
+if (currentGas &gt;= GAS_MEDIUM_THRESHOLD) Serial.println(&quot;Gut&quot;);
+else if (currentGas &gt;= GAS_BAD_THRESHOLD) Serial.println(&quot;Mittel&quot;);
+else Serial.println(&quot;Schlecht&quot;);
+Serial.print(&quot;Alarm aktiv: &quot;); Serial.println(airBad ? &quot;JA&quot; : &quot;NEIN&quot;);
+Serial.print(&quot;Alarm quittiert: &quot;); Serial.println(alarmMuted ? &quot;JA&quot; : &quot;NEIN&quot;);
+Serial.println(&quot;-------------------------&quot;);
+if (currentScreen == SCREEN_MAIN) {
+updateMainMeasurementDisplay();
+}
+}
+// ======================================================
+// LOGGING TIMER
+// ======================================================
+void handleLogging() {
+if (!hasSensorReading) return;
+if (millis() - lastLogSave &gt;= logInterval) {
+lastLogSave = millis();
+saveMeasurementToLog();
+pruneOldLogEntries();
+pruneOldAlarmEntries();
+statsNeedsRefresh = true;
+graphNeedsRefresh = true;
+}
+}
+// ======================================================
+// SETUP
+// ======================================================
+void setup() {
+Serial.begin(115200);
+delay(1500);
+Serial.println(&quot;Starte Umweltstation mit Alarm-Protokoll...&quot;);
+SPI.begin(18, 19, 23);
+pinMode(TFT_CS, OUTPUT);
+pinMode(TOUCH_CS, OUTPUT);
+digitalWrite(TFT_CS, HIGH);
+digitalWrite(TOUCH_CS, HIGH);
+pinMode(BUZZER_PIN, OUTPUT);
+digitalWrite(BUZZER_PIN, LOW);
+pinMode(BUTTON_PIN, INPUT_PULLUP);
+Wire.begin(I2C_SDA, I2C_SCL);
+initStorage();
+disableTouch();
+display.init(320, 480, 0, 0, ST7796S_RGB);
+display.setRotation(DISPLAY_ROTATION);
+showStartupMessage(&quot;Starte...&quot;, WHITE);
+disableDisplay();
+touch.begin();
+touch.setRotation(TOUCH_ROTATION);
+if (!rtc.begin()) {
+showStartupMessage(&quot;RTC fehlt!&quot;, RED);
+Serial.println(&quot;RTC nicht gefunden!&quot;);
+while (1) delay(1000);
+
+
+}
+Serial.println(&quot;RTC gefunden!&quot;);
+if (rtc.lostPower()) {
+Serial.println(&quot;RTC Zeit verloren. Setze Kompilierzeit...&quot;);
+rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+} else {
+Serial.println(&quot;RTC Zeit vorhanden. Kein Reset der Uhrzeit.&quot;);
+}
+Serial.println(&quot;Starte BME680...&quot;);
+if (!bme.begin(0x76)) {
+Serial.println(&quot;BME680 nicht bei 0x76 gefunden. Teste 0x77...&quot;);
+if (!bme.begin(0x77)) {
+showStartupMessage(&quot;BME680 fehlt!&quot;, RED);
+while (1) {
+Serial.println(&quot;BME680 fehlt weiterhin.&quot;);
+delay(1500);
+}
+}
+}
+Serial.println(&quot;BME680 erfolgreich initialisiert!&quot;);
+bme.setTemperatureOversampling(BME680_OS_8X);
+bme.setHumidityOversampling(BME680_OS_2X);
+bme.setPressureOversampling(BME680_OS_4X);
+bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
+bme.setGasHeater(320, 150);
+currentScreen = SCREEN_MAIN;
+drawStaticUI();
+updateClock();
+updateFooterStatus();
+lastLogSave = millis();
+Serial.println(&quot;Setup fertig.&quot;);
+}
+// ======================================================
+// LOOP
+// ======================================================
+void loop() {
+handleTouch();
+handleButton();
+handleBuzzer();
+if (millis() - lastClockUpdate &gt;= clockUpdateInterval) {
+lastClockUpdate = millis();
+updateClock();
+}
+if (millis() - lastSensorUpdate &gt;= sensorUpdateInterval) {
+lastSensorUpdate = millis();
+updateSensorData();
+}
+handleLogging();
+if (currentScreen == SCREEN_STATS &amp;&amp; statsNeedsRefresh) {
+statsNeedsRefresh = false;
+drawStatsScreen();
+}
+if (currentScreen == SCREEN_GRAPH &amp;&amp; graphNeedsRefresh) {
+graphNeedsRefresh = false;
+drawGraphScreen();
+}
+if (currentScreen == SCREEN_ALARMS &amp;&amp; alarmLogNeedsRefresh) {
+alarmLogNeedsRefresh = false;
+drawAlarmLogScreen();
+
+
+}
+}
+
+</pre></div></details></div></div></div></section>
+
+
+    <section id="features"><div class="wrap"><div class="section-title reveal"><h2>Funktionen im Überblick</h2><p>Die wichtigsten Features des finalen Systems.</p></div><div class="grid-3"><article class="card reveal"><span class="tag">Sensorik</span><h3>BME680</h3><p>Temperatur, Feuchte, Luftdruck und Gaswiderstand werden regelmäßig gelesen.</p></article><article class="card reveal"><span class="tag">Offline</span><h3>RTC + LittleFS</h3><p>Uhrzeit und Daten bleiben lokal, ohne Internet und ohne Cloud.</p></article><article class="card reveal"><span class="tag">Touch UI</span><h3>Display-Menü</h3><p>Live, Statistik, Graph und Alarmprotokoll sind direkt bedienbar.</p></article><article class="card reveal"><span class="tag">Alarm</span><h3>Buzzer + Button</h3><p>Schlechte Luft aktiviert den Buzzer und kann per Button quittiert werden.</p></article><article class="card reveal"><span class="tag">Daten</span><h3>24h Graph</h3><p>Stündliche Durchschnitte zeigen den Verlauf der letzten 24 Stunden.</p></article><article class="card reveal"><span class="tag">CAD</span><h3>3D-Gehäuse</h3><p>OpenSCAD-Modell, Druck, Montage und dokumentierte Nacharbeit.</p></article></div></div></section>
+
+    <section id="aufbau"><div class="wrap"><div class="section-title reveal"><h2>Physischer CPS-Aufbau</h2><p>Hardware und Gehäuse sind nicht Beiwerk, sondern zentraler Teil des Projekts.</p></div><div class="grid-2"><div class="panel reveal"><h3>Systemdiagramm</h3><div class="diagram"><div class="node"><b>ESP32</b><span>Steuerung, SPI, I2C, GPIO, LittleFS</span></div><div class="node"><b>BME680</b><span>Temperatur, Feuchte, Druck, Gas</span></div><div class="node"><b>DS3231</b><span>Offline-Uhrzeit und Datum</span></div><div class="node"><b>Display</b><span>ST7796S 4 Zoll</span></div><div class="node"><b>Touch</b><span>XPT2046 kalibriert</span></div><div class="node"><b>Buzzer</b><span>Alarm bei schlechter Luft</span></div><div class="node"><b>Button</b><span>Alarmquittierung</span></div><div class="node"><b>Gehäuse</b><span>3D-Druck und Montage</span></div></div></div><div class="panel reveal"><h3>Pinbelegung</h3><table><thead><tr><th>Funktion</th><th>ESP32</th><th>Hinweis</th></tr></thead><tbody><tr><td>Display SPI</td><td>18, 23, 5, 2, 4</td><td>SCK, MOSI, CS, DC, RST</td></tr><tr><td>Touch SPI</td><td>18, 23, 19, 27, 14</td><td>CLK, DIN, DO, CS, IRQ</td></tr><tr><td>I2C</td><td>21, 22</td><td>BME680 + RTC</td></tr><tr><td>Buzzer</td><td>26</td><td>aktiver Buzzer</td></tr><tr><td>Button</td><td>13</td><td>INPUT_PULLUP</td></tr></tbody></table></div></div></div></section>
+
+    <section id="kalibrierung"><div class="wrap"><div class="section-title reveal"><h2>Kalibrierung interaktiv</h2><p>Die Gasgrenzwerte basieren auf echten Messungen: Fenster offen, Fenster geschlossen und Sensor angepustet.</p></div><div class="grid-2"><div class="panel reveal"><h3>Messwertvergleich</h3><table><thead><tr><th>Messgröße</th><th>Sensor</th><th>Referenz</th><th>Umsetzung</th></tr></thead><tbody><tr><td>Temperatur</td><td>29.2 °C</td><td>25.6 °C</td><td>Offset -3.6 °C</td></tr><tr><td>Feuchte</td><td>32.6 %</td><td>36 %</td><td>kein Extra-Offset</td></tr><tr><td>Druck</td><td>993.5 hPa</td><td>1022 hPa</td><td>kein Offset, Referenz vermutlich reduziert</td></tr></tbody></table></div><div class="panel reveal"><h3>Gasstatus ausprobieren</h3><div class="calib-controls"><button data-gas="132.5">Fenster offen</button><button data-gas="88.7">Fenster geschlossen</button><button data-gas="60">Angepustet</button><button data-gas="65">Alarm-Demo</button></div><div class="calib-result" id="gasResult"><small>Gaswert</small><br><strong>132.5 kΩ · Gut</strong><p>Status grün, kein Buzzer.</p></div></div></div></div></section>
+
+    <section id="scrum"><div class="wrap"><div class="section-title reveal"><h2>Scrumboard und Projektmanagement</h2><p>Die neuen Karten wurden nachgetragen: Touch, Statistik, Logging, Graph, Alarmprotokoll, Kalibrierung und Kurzzeittest.</p></div><div class="grid-3"><div class="card reveal"><span class="tag">Done</span><h3>Touch & UI</h3><p>Touchscreen einrichten, Statistikscreen, Graphscreen, Alarmprotokoll.</p></div><div class="card reveal"><span class="tag">Done</span><h3>Repo gepflegt</h3><p>Hardware, Software, Tests, Bilder, 3D-Modelle und Dokumentation strukturiert.</p></div><div class="card reveal"><span class="tag">Backlog</span><h3>24h-Dauertest</h3><p>Bewusst offen gelassen. Ehrlich dokumentiert, da vor der Präsentation keine Zeit mehr blieb.</p></div></div></div></section>
+
+    <section id="tests"><div class="wrap"><div class="section-title reveal"><h2>Tests und Qualitätssicherung</h2><p>Komponenten wurden einzeln getestet und danach schrittweise integriert.</p></div><div class="panel reveal"><table><thead><tr><th>Test</th><th>Ziel</th><th>Ergebnis</th></tr></thead><tbody><tr><td>ESP32 Basis</td><td>Upload, Serial Monitor, millis</td><td>Bestanden</td></tr><tr><td>Display</td><td>ST7796S Farben, Text, Rotation</td><td>Bestanden</td></tr><tr><td>Touch</td><td>XPT2046 Kalibrierung</td><td>Bestanden</td></tr><tr><td>BME680</td><td>Adresse 0x76, Werte lesen</td><td>Bestanden</td></tr><tr><td>RTC</td><td>Defekt analysiert, Ersatzmodul getestet</td><td>Bestanden</td></tr><tr><td>LittleFS</td><td>Messwerte und Alarmdaten speichern</td><td>Bestanden</td></tr><tr><td>24h-Test</td><td>Langzeitstabilität</td><td>Backlog</td></tr></tbody></table></div></div></section>
+
+    <section id="code"><div class="wrap"><div class="section-title reveal"><h2>Code Explorer</h2><p>Der vollständige Code ist integriert und zusätzlich als INO-Datei im ZIP enthalten.</p></div><div class="panel reveal"><input class="search" id="functionSearch" placeholder="Funktion suchen, z. B. updateSensorData, drawGraphScreen, LittleFS..." /><div class="function-grid" id="functionGrid">
+<article class="function-card" data-name="maptouchtoscreen">
+  <code>mapTouchToScreen()</code>
+  <p>Wandelt rohe Touchwerte in Displaykoordinaten um und korrigiert Spiegelung/Offset.</p>
+</article>
+
+<article class="function-card" data-name="initstorage">
+  <code>initStorage()</code>
+  <p>Initialisiert LittleFS und legt Mess- und Alarm-CSV-Dateien an.</p>
+</article>
+
+<article class="function-card" data-name="savemeasurementtolog">
+  <code>saveMeasurementToLog()</code>
+  <p>Speichert aktuelle Messwerte mit RTC-Zeitstempel in umwelt_log.csv.</p>
+</article>
+
+<article class="function-card" data-name="savealarmtolog">
+  <code>saveAlarmToLog()</code>
+  <p>Speichert Alarmereignisse mit Zeit, Gaswert, Temperatur, Feuchte und Druck.</p>
+</article>
+
+<article class="function-card" data-name="drawstaticui">
+  <code>drawStaticUI()</code>
+  <p>Zeichnet den Hauptbildschirm mit Header, Messwertboxen und Statusbereich.</p>
+</article>
+
+<article class="function-card" data-name="drawstatsscreen">
+  <code>drawStatsScreen()</code>
+  <p>Zeigt Durchschnittswerte für Heute und die letzten 24 Stunden.</p>
+</article>
+
+<article class="function-card" data-name="drawalarmlogscreen">
+  <code>drawAlarmLogScreen()</code>
+  <p>Zeigt die letzten gespeicherten Alarmereignisse mit Zeit und Messwerten.</p>
+</article>
+
+<article class="function-card" data-name="drawgraphscreen">
+  <code>drawGraphScreen()</code>
+  <p>Berechnet 24h-Stundenmittel und zeichnet einen Verlauf für gewählte Messgröße.</p>
+</article>
+
+<article class="function-card" data-name="handlebutton">
+  <code>handleButton()</code>
+  <p>Quittiert aktiven Alarm über den physischen Taster.</p>
+</article>
+
+<article class="function-card" data-name="handlebuzzer">
+  <code>handleBuzzer()</code>
+  <p>Steuert den periodischen Warnton bei schlechter Luftqualität.</p>
+</article>
+
+<article class="function-card" data-name="handletouch">
+  <code>handleTouch()</code>
+  <p>Verarbeitet Touchnavigation zwischen Live, Statistik, Graph und Alarmen.</p>
+</article>
+
+<article class="function-card" data-name="updatesensordata">
+  <code>updateSensorData()</code>
+  <p>Liest BME680, kalibriert Temperatur, bewertet Luftqualität und setzt Alarmstatus.</p>
+</article>
+
+<article class="function-card" data-name="handlelogging">
+  <code>handleLogging()</code>
+  <p>Speichert Messwerte zyklisch und aktualisiert Statistik/Graph bei neuen Daten.</p>
+</article>
+
+<article class="function-card" data-name="setup">
+  <code>setup()</code>
+  <p>Initialisiert alle Module und startet die Oberfläche.</p>
+</article>
+
+<article class="function-card" data-name="loop">
+  <code>loop()</code>
+  <p>Nicht-blockierende Hauptschleife für Touch, Sensorik, Alarm und Logging.</p>
+</article></div><details><summary>Vollständigen Hauptcode anzeigen</summary><div class="codebox"><pre>#include &lt;SPI.h&gt;
+#include &lt;Wire.h&gt;
+#include &lt;LittleFS.h&gt;
+
+#include &lt;Adafruit_GFX.h&gt;
+#include &lt;Adafruit_ST7796S.h&gt;
+#include &lt;Adafruit_Sensor.h&gt;
+#include &lt;Adafruit_BME680.h&gt;
+#include &lt;XPT2046_Touchscreen.h&gt;
+
+#include &quot;RTClib.h&quot;
+
+// ======================================================
+// PINS
+// ======================================================
+
+#define TFT_CS   5
+#define TFT_DC   2
+#define TFT_RST  4
+
+#define TOUCH_CS   27
+#define TOUCH_IRQ  14
+
+#define BUZZER_PIN 26
+#define BUTTON_PIN 13
+
+#define I2C_SDA 21
+#define I2C_SCL 22
+
+// ======================================================
+// OBJEKTE
+// ======================================================
+
+Adafruit_ST7796S display(TFT_CS, TFT_DC, TFT_RST);
+XPT2046_Touchscreen touch(TOUCH_CS, TOUCH_IRQ);
+Adafruit_BME680 bme;
+RTC_DS3231 rtc;
+
+// ======================================================
+// KALIBRIERUNG
+// ======================================================
+
+const float TEMP_OFFSET = -3.6;
+const float PRESSURE_OFFSET = 0.0;
+
+const float GAS_BAD_THRESHOLD = 70.0;
+const float GAS_MEDIUM_THRESHOLD = 100.0;
+
+// ======================================================
+// DATEISPEICHER
+// ======================================================
+
+const char* LOG_FILE = &quot;/umwelt_log.csv&quot;;
+const char* ALARM_FILE = &quot;/alarm_log.csv&quot;;
+
+// Fuer Praesentation/Test: alle 30 Sekunden speichern.
+// Fuer echten Betrieb spaeter auf 300000 stellen.
+const unsigned long logInterval = 30000;
+// const unsigned long logInterval = 300000;
+
+unsigned long lastLogSave = 0;
+
+const unsigned long STORAGE_RETENTION_SECONDS = 14UL * 24UL * 60UL * 60UL;
+const unsigned long LAST_24H_SECONDS = 24UL * 60UL * 60UL;
+
+// ======================================================
+// TIMER
+// ======================================================
+
+unsigned long lastSensorUpdate = 0;
+unsigned long lastClockUpdate = 0;
+unsigned long lastBuzzerToggle = 0;
+unsigned long lastButtonPress = 0;
+unsigned long lastTouchAction = 0;
+
+const unsigned long sensorUpdateInterval = 2000;
+const unsigned long clockUpdateInterval = 1000;
+const unsigned long buzzerInterval = 300;
+const unsigned long debounceDelay = 250;
+const unsigned long touchDebounceDelay = 350;
+
+// ======================================================
+// FLICKER FIX FLAGS
+// ======================================================
+
+bool statsNeedsRefresh = false;
+bool graphNeedsRefresh = false;
+bool alarmLogNeedsRefresh = false;
+
+// ======================================================
+// ALARM-LOGIK
+// ======================================================
+
+bool airBad = false;
+bool lastAirBadState = false;
+bool alarmMuted = false;
+bool buzzerState = false;
+
+const bool FORCE_ALARM_TEST = false;
+
+// ======================================================
+// FARBEN RGB565
+// ======================================================
+
+#define BLACK    0x0000
+#define WHITE    0xFFFF
+#define RED      0xF800
+#define GREEN    0x07E0
+#define BLUE     0x001F
+#define YELLOW   0xFFE0
+#define CYAN     0x07FF
+#define MAGENTA  0xF81F
+#define ORANGE   0xFD20
+#define GRAY     0x8410
+#define DARKGRAY 0x4208
+#define NAVY     0x0010
+
+// ======================================================
+// DISPLAY / TOUCH
+// ======================================================
+
+const int SCREEN_W = 480;
+const int SCREEN_H = 320;
+
+const int DISPLAY_ROTATION = 1;
+const int TOUCH_ROTATION = 1;
+
+int TOUCH_MIN_X = 200;
+int TOUCH_MAX_X = 3800;
+int TOUCH_MIN_Y = 200;
+int TOUCH_MAX_Y = 3800;
+
+bool TOUCH_SWAP_XY = false;
+bool TOUCH_INVERT_X = true;
+bool TOUCH_INVERT_Y = true;
+
+int TOUCH_OFFSET_X = 12;
+int TOUCH_OFFSET_Y = 0;
+
+// ======================================================
+// SCREEN MODUS
+// ======================================================
+
+enum ScreenMode {
+  SCREEN_MAIN,
+  SCREEN_STATS,
+  SCREEN_GRAPH,
+  SCREEN_ALARMS
+};
+
+ScreenMode currentScreen = SCREEN_MAIN;
+
+// ======================================================
+// GRAPH MODUS
+// ======================================================
+
+enum GraphMode {
+  GRAPH_TEMP,
+  GRAPH_HUM,
+  GRAPH_PRESSURE,
+  GRAPH_GAS
+};
+
+GraphMode currentGraphMode = GRAPH_TEMP;
+
+// ======================================================
+// LAYOUT MAIN SCREEN
+// ======================================================
+
+const int HEADER_X = 12;
+const int HEADER_Y = 18;
+const int HEADER_W = 456;
+const int HEADER_H = 42;
+
+const int BOX_W = 200;
+const int BOX_H = 55;
+
+const int BOX1_X = 25;
+const int BOX1_Y = 72;
+const int BOX2_X = 255;
+const int BOX2_Y = 72;
+const int BOX3_X = 25;
+const int BOX3_Y = 137;
+const int BOX4_X = 255;
+const int BOX4_Y = 137;
+
+const int STATUS_X = 25;
+const int STATUS_Y = 205;
+const int STATUS_W = 430;
+const int STATUS_H = 48;
+
+const int FOOTER_X = 0;
+const int FOOTER_Y = 272;
+const int FOOTER_W = 480;
+const int FOOTER_H = 35;
+
+const int STAT_BTN_X = 365;
+const int STAT_BTN_Y = 276;
+const int STAT_BTN_W = 95;
+const int STAT_BTN_H = 28;
+
+// ======================================================
+// LAYOUT STATS / GRAPH / ALARM KOMPAKT
+// ======================================================
+
+const int BACK_BTN_X = 350;
+const int BACK_BTN_Y = 265;
+const int BACK_BTN_W = 110;
+const int BACK_BTN_H = 34;
+
+const int ALARM_BTN_X = 75;
+const int ALARM_BTN_Y = 265;
+const int ALARM_BTN_W = 120;
+const int ALARM_BTN_H = 34;
+
+const int GRAPH_BTN_X = 210;
+const int GRAPH_BTN_Y = 265;
+const int GRAPH_BTN_W = 120;
+const int GRAPH_BTN_H = 34;
+
+const int GBTN_Y = 232;
+const int GBTN_H = 28;
+const int GBTN_TEMP_X = 25;
+const int GBTN_HUM_X = 130;
+const int GBTN_PRESS_X = 235;
+const int GBTN_GAS_X = 350;
+const int GBTN_W = 95;
+
+// ======================================================
+// AKTUELLE SENSORWERTE
+// ======================================================
+
+float currentTemp = 0.0;
+float currentHum = 0.0;
+float currentPressure = 0.0;
+float currentGas = 0.0;
+bool hasSensorReading = false;
+
+// ======================================================
+// STATISTIK SEIT START
+// ======================================================
+
+unsigned long statsCount = 0;
+float sumTemp = 0.0;
+float sumHum = 0.0;
+float sumPressure = 0.0;
+float sumGas = 0.0;
+
+// ======================================================
+// STATISTIK AUS DATEI
+// ======================================================
+
+struct AverageStats {
+  bool hasData;
+  unsigned long count;
+  float avgTemp;
+  float avgHum;
+  float avgPressure;
+  float avgGas;
+};
+
+struct HourlyPoint {
+  bool hasData;
+  unsigned long hourNumber;
+  float avgTemp;
+  float avgHum;
+  float avgPressure;
+  float avgGas;
+};
+
+// ======================================================
+// HILFSFUNKTIONEN
+// ======================================================
+
+void disableDisplay() {
+  digitalWrite(TFT_CS, HIGH);
+  delayMicroseconds(5);
+}
+
+void disableTouch() {
+  digitalWrite(TOUCH_CS, HIGH);
+  delayMicroseconds(5);
+}
+
+float clampFloat(float value, float minVal, float maxVal) {
+  if (value &lt; minVal) return minVal;
+  if (value &gt; maxVal) return maxVal;
+  return value;
+}
+
+int mapGasToPercent(float gasKOhm) {
+  gasKOhm = clampFloat(gasKOhm, 50.0, 140.0);
+  return (int)((gasKOhm - 50.0) * 100.0 / 90.0);
+}
+
+void mapTouchToScreen(int rawX, int rawY, int &amp;screenX, int &amp;screenY) {
+  int x = rawX;
+  int y = rawY;
+
+  if (TOUCH_SWAP_XY) {
+    int temp = x;
+    x = y;
+    y = temp;
+  }
+
+  screenX = map(x, TOUCH_MIN_X, TOUCH_MAX_X, 0, SCREEN_W - 1);
+  screenY = map(y, TOUCH_MIN_Y, TOUCH_MAX_Y, 0, SCREEN_H - 1);
+
+  if (TOUCH_INVERT_X) {
+    screenX = (SCREEN_W - 1) - screenX;
+  }
+
+  if (TOUCH_INVERT_Y) {
+    screenY = (SCREEN_H - 1) - screenY;
+  }
+
+  screenX = screenX + TOUCH_OFFSET_X;
+  screenY = screenY + TOUCH_OFFSET_Y;
+
+  screenX = constrain(screenX, 0, SCREEN_W - 1);
+  screenY = constrain(screenY, 0, SCREEN_H - 1);
+}
+
+bool isInside(int x, int y, int bx, int by, int bw, int bh) {
+  return (x &gt;= bx &amp;&amp; x &lt;= bx + bw &amp;&amp; y &gt;= by &amp;&amp; y &lt;= by + bh);
+}
+
+void showStartupMessage(const char* msg, uint16_t color) {
+  disableTouch();
+  display.fillScreen(BLACK);
+  display.setTextColor(color, BLACK);
+  display.setTextSize(3);
+  display.setCursor(35, 135);
+  display.print(msg);
+}
+
+// ======================================================
+// CSV HELPER
+// ======================================================
+
+String getCsvField(String line, int index) {
+  int currentIndex = 0;
+  int start = 0;
+
+  for (int i = 0; i &lt;= line.length(); i++) {
+    if (i == line.length() || line.charAt(i) == &#x27;;&#x27;) {
+      if (currentIndex == index) {
+        return line.substring(start, i);
+      }
+      currentIndex++;
+      start = i + 1;
+    }
+  }
+  return &quot;&quot;;
+}
+
+bool parseLogLine(String line, unsigned long &amp;epoch, float &amp;temp, float &amp;hum, float &amp;pressure, float &amp;gas) {
+  line.trim();
+  if (line.length() &lt; 5) return false;
+  if (line.startsWith(&quot;epoch&quot;)) return false;
+
+  String f0 = getCsvField(line, 0);
+  String f1 = getCsvField(line, 1);
+  String f2 = getCsvField(line, 2);
+  String f3 = getCsvField(line, 3);
+  String f4 = getCsvField(line, 4);
+
+  if (f0.length() == 0 || f1.length() == 0 || f2.length() == 0 || f3.length() == 0 || f4.length() == 0) return false;
+
+  epoch = strtoul(f0.c_str(), NULL, 10);
+  temp = f1.toFloat();
+  hum = f2.toFloat();
+  pressure = f3.toFloat();
+  gas = f4.toFloat();
+  return true;
+}
+
+bool parseAlarmLine(String line, unsigned long &amp;epoch, float &amp;temp, float &amp;hum, float &amp;pressure, float &amp;gas, String &amp;status) {
+  line.trim();
+  if (line.length() &lt; 5) return false;
+  if (line.startsWith(&quot;epoch&quot;)) return false;
+
+  String f0 = getCsvField(line, 0);
+  String f1 = getCsvField(line, 1);
+  String f2 = getCsvField(line, 2);
+  String f3 = getCsvField(line, 3);
+  String f4 = getCsvField(line, 4);
+  String f5 = getCsvField(line, 5);
+
+  if (f0.length() == 0 || f1.length() == 0 || f2.length() == 0 || f3.length() == 0 || f4.length() == 0) return false;
+
+  epoch = strtoul(f0.c_str(), NULL, 10);
+  temp = f1.toFloat();
+  hum = f2.toFloat();
+  pressure = f3.toFloat();
+  gas = f4.toFloat();
+  status = f5;
+  return true;
+}
+
+unsigned long getHourNumber(unsigned long epoch) {
+  return epoch / 3600UL;
+}
+
+// ======================================================
+// LITTLEFS
+// ======================================================
+
+void initStorage() {
+  if (!LittleFS.begin(true)) {
+    Serial.println(&quot;LittleFS konnte nicht gestartet werden.&quot;);
+    return;
+  }
+
+  Serial.println(&quot;LittleFS gestartet.&quot;);
+
+  if (!LittleFS.exists(LOG_FILE)) {
+    File file = LittleFS.open(LOG_FILE, FILE_WRITE);
+    if (file) {
+      file.println(&quot;epoch;temp;hum;pressure;gas&quot;);
+      file.close();
+      Serial.println(&quot;Mess-Logdatei erstellt.&quot;);
+    }
+  }
+
+  if (!LittleFS.exists(ALARM_FILE)) {
+    File file = LittleFS.open(ALARM_FILE, FILE_WRITE);
+    if (file) {
+      file.println(&quot;epoch;temp;hum;pressure;gas;status&quot;);
+      file.close();
+      Serial.println(&quot;Alarm-Logdatei erstellt.&quot;);
+    }
+  }
+}
+
+void saveMeasurementToLog() {
+  if (!hasSensorReading) return;
+
+  DateTime now = rtc.now();
+  unsigned long epoch = now.unixtime();
+
+  File file = LittleFS.open(LOG_FILE, FILE_APPEND);
+  if (!file) {
+    Serial.println(&quot;Logdatei konnte nicht geoeffnet werden.&quot;);
+    return;
+  }
+
+  file.print(epoch);
+  file.print(&quot;;&quot;);
+  file.print(currentTemp, 2);
+  file.print(&quot;;&quot;);
+  file.print(currentHum, 2);
+  file.print(&quot;;&quot;);
+  file.print(currentPressure, 2);
+  file.print(&quot;;&quot;);
+  file.println(currentGas, 2);
+  file.close();
+  Serial.println(&quot;Messwert gespeichert.&quot;);
+}
+
+void saveAlarmToLog(const char* statusText) {
+  if (!hasSensorReading) return;
+
+  DateTime now = rtc.now();
+  unsigned long epoch = now.unixtime();
+
+  File file = LittleFS.open(ALARM_FILE, FILE_APPEND);
+  if (!file) {
+    Serial.println(&quot;Alarmdatei konnte nicht geoeffnet werden.&quot;);
+    return;
+  }
+
+  file.print(epoch);
+  file.print(&quot;;&quot;);
+  file.print(currentTemp, 2);
+  file.print(&quot;;&quot;);
+  file.print(currentHum, 2);
+  file.print(&quot;;&quot;);
+  file.print(currentPressure, 2);
+  file.print(&quot;;&quot;);
+  file.print(currentGas, 2);
+  file.print(&quot;;&quot;);
+  file.println(statusText);
+  file.close();
+
+  alarmLogNeedsRefresh = true;
+  Serial.println(&quot;Alarmereignis gespeichert.&quot;);
+}
+
+void pruneOldLogEntries() {
+  DateTime now = rtc.now();
+  unsigned long nowEpoch = now.unixtime();
+
+  if (!LittleFS.exists(LOG_FILE)) return;
+
+  File input = LittleFS.open(LOG_FILE, FILE_READ);
+  File output = LittleFS.open(&quot;/temp_log.csv&quot;, FILE_WRITE);
+
+  if (!input || !output) {
+    Serial.println(&quot;Prune Messlog fehlgeschlagen.&quot;);
+    if (input) input.close();
+    if (output) output.close();
+    return;
+  }
+
+  output.println(&quot;epoch;temp;hum;pressure;gas&quot;);
+
+  while (input.available()) {
+    String line = input.readStringUntil(&#x27;\n&#x27;);
+    line.trim();
+
+    unsigned long epoch;
+    float temp, hum, pressure, gas;
+
+    if (parseLogLine(line, epoch, temp, hum, pressure, gas)) {
+      if (epoch &lt;= nowEpoch &amp;&amp; nowEpoch - epoch &lt;= STORAGE_RETENTION_SECONDS) {
+        output.println(line);
+      }
+    }
+  }
+
+  input.close();
+  output.close();
+  LittleFS.remove(LOG_FILE);
+  LittleFS.rename(&quot;/temp_log.csv&quot;, LOG_FILE);
+  Serial.println(&quot;Alte Mess-Logeintraege entfernt.&quot;);
+}
+
+void pruneOldAlarmEntries() {
+  DateTime now = rtc.now();
+  unsigned long nowEpoch = now.unixtime();
+
+  if (!LittleFS.exists(ALARM_FILE)) return;
+
+  File input = LittleFS.open(ALARM_FILE, FILE_READ);
+  File output = LittleFS.open(&quot;/temp_alarm.csv&quot;, FILE_WRITE);
+
+  if (!input || !output) {
+    Serial.println(&quot;Prune Alarmlog fehlgeschlagen.&quot;);
+    if (input) input.close();
+    if (output) output.close();
+    return;
+  }
+
+  output.println(&quot;epoch;temp;hum;pressure;gas;status&quot;);
+
+  while (input.available()) {
+    String line = input.readStringUntil(&#x27;\n&#x27;);
+    line.trim();
+
+    unsigned long epoch;
+    float temp, hum, pressure, gas;
+    String status;
+
+    if (parseAlarmLine(line, epoch, temp, hum, pressure, gas, status)) {
+      if (epoch &lt;= nowEpoch &amp;&amp; nowEpoch - epoch &lt;= STORAGE_RETENTION_SECONDS) {
+        output.println(line);
+      }
+    }
+  }
+
+  input.close();
+  output.close();
+  LittleFS.remove(ALARM_FILE);
+  LittleFS.rename(&quot;/temp_alarm.csv&quot;, ALARM_FILE);
+  Serial.println(&quot;Alte Alarm-Logeintraege entfernt.&quot;);
+}
+
+// ======================================================
+// STATISTIK AUS LOG
+// ======================================================
+
+AverageStats makeEmptyAverageStats() {
+  AverageStats result;
+  result.hasData = false;
+  result.count = 0;
+  result.avgTemp = 0;
+  result.avgHum = 0;
+  result.avgPressure = 0;
+  result.avgGas = 0;
+  return result;
+}
+
+AverageStats calculateAverageForRange(unsigned long fromEpoch, unsigned long toEpoch) {
+  AverageStats result = makeEmptyAverageStats();
+  float sTemp = 0;
+  float sHum = 0;
+  float sPressure = 0;
+  float sGas = 0;
+
+  File file = LittleFS.open(LOG_FILE, FILE_READ);
+  if (!file) return result;
+
+  while (file.available()) {
+    String line = file.readStringUntil(&#x27;\n&#x27;);
+    line.trim();
+
+    unsigned long epoch;
+    float temp, hum, pressure, gas;
+
+    if (parseLogLine(line, epoch, temp, hum, pressure, gas)) {
+      if (epoch &gt;= fromEpoch &amp;&amp; epoch &lt;= toEpoch) {
+        sTemp += temp;
+        sHum += hum;
+        sPressure += pressure;
+        sGas += gas;
+        result.count++;
+      }
+    }
+  }
+
+  file.close();
+
+  if (result.count &gt; 0) {
+    result.hasData = true;
+    result.avgTemp = sTemp / result.count;
+    result.avgHum = sHum / result.count;
+    result.avgPressure = sPressure / result.count;
+    result.avgGas = sGas / result.count;
+  }
+
+  return result;
+}
+
+AverageStats calculateTodayAverage() {
+  DateTime now = rtc.now();
+  DateTime startOfDay(now.year(), now.month(), now.day(), 0, 0, 0);
+  return calculateAverageForRange(startOfDay.unixtime(), now.unixtime());
+}
+
+AverageStats calculateLast24HoursAverage() {
+  DateTime now = rtc.now();
+  unsigned long nowEpoch = now.unixtime();
+  unsigned long fromEpoch = nowEpoch - LAST_24H_SECONDS;
+  return calculateAverageForRange(fromEpoch, nowEpoch);
+}
+
+void calculateHourlyPoints(HourlyPoint points[24]) {
+  for (int i = 0; i &lt; 24; i++) {
+    points[i].hasData = false;
+    points[i].hourNumber = 0;
+    points[i].avgTemp = 0;
+    points[i].avgHum = 0;
+    points[i].avgPressure = 0;
+    points[i].avgGas = 0;
+  }
+
+  DateTime now = rtc.now();
+  unsigned long currentHour = getHourNumber(now.unixtime());
+
+  float sumTemp[24];
+  float sumHum[24];
+  float sumPressure[24];
+  float sumGas[24];
+  unsigned long count[24];
+
+  for (int i = 0; i &lt; 24; i++) {
+    sumTemp[i] = 0;
+    sumHum[i] = 0;
+    sumPressure[i] = 0;
+    sumGas[i] = 0;
+    count[i] = 0;
+    unsigned long hourNum = currentHour - (23 - i);
+    points[i].hourNumber = hourNum;
+  }
+
+  File file = LittleFS.open(LOG_FILE, FILE_READ);
+  if (!file) return;
+
+  while (file.available()) {
+    String line = file.readStringUntil(&#x27;\n&#x27;);
+    line.trim();
+
+    unsigned long epoch;
+    float temp, hum, pressure, gas;
+
+    if (parseLogLine(line, epoch, temp, hum, pressure, gas)) {
+      unsigned long hourNum = getHourNumber(epoch);
+      for (int i = 0; i &lt; 24; i++) {
+        if (points[i].hourNumber == hourNum) {
+          sumTemp[i] += temp;
+          sumHum[i] += hum;
+          sumPressure[i] += pressure;
+          sumGas[i] += gas;
+          count[i]++;
+          break;
+        }
+      }
+    }
+  }
+
+  file.close();
+
+  for (int i = 0; i &lt; 24; i++) {
+    if (count[i] &gt; 0) {
+      points[i].hasData = true;
+      points[i].avgTemp = sumTemp[i] / count[i];
+      points[i].avgHum = sumHum[i] / count[i];
+      points[i].avgPressure = sumPressure[i] / count[i];
+      points[i].avgGas = sumGas[i] / count[i];
+    }
+  }
+}
+
+float getGraphValue(HourlyPoint p, GraphMode mode) {
+  if (mode == GRAPH_TEMP) return p.avgTemp;
+  if (mode == GRAPH_HUM) return p.avgHum;
+  if (mode == GRAPH_PRESSURE) return p.avgPressure;
+  if (mode == GRAPH_GAS) return p.avgGas;
+  return 0;
+}
+
+const char* getGraphTitle(GraphMode mode) {
+  if (mode == GRAPH_TEMP) return &quot;Temperatur&quot;;
+  if (mode == GRAPH_HUM) return &quot;Feuchte&quot;;
+  if (mode == GRAPH_PRESSURE) return &quot;Druck&quot;;
+  if (mode == GRAPH_GAS) return &quot;Gas&quot;;
+  return &quot;&quot;;
+}
+
+const char* getGraphUnit(GraphMode mode) {
+  if (mode == GRAPH_TEMP) return &quot;C&quot;;
+  if (mode == GRAPH_HUM) return &quot;%&quot;;
+  if (mode == GRAPH_PRESSURE) return &quot;hPa&quot;;
+  if (mode == GRAPH_GAS) return &quot;KOhm&quot;;
+  return &quot;&quot;;
+}
+
+uint16_t getGraphColor(GraphMode mode) {
+  if (mode == GRAPH_TEMP) return ORANGE;
+  if (mode == GRAPH_HUM) return CYAN;
+  if (mode == GRAPH_PRESSURE) return MAGENTA;
+  if (mode == GRAPH_GAS) return GREEN;
+  return WHITE;
+}
+
+// ======================================================
+// MAIN SCREEN
+// ======================================================
+
+void drawHeader() {
+  disableTouch();
+  display.fillRect(HEADER_X, HEADER_Y, HEADER_W, HEADER_H, NAVY);
+  display.drawRoundRect(HEADER_X, HEADER_Y, HEADER_W, HEADER_H, 7, WHITE);
+  display.setTextColor(WHITE, NAVY);
+  display.setTextSize(3);
+  display.setCursor(25, 28);
+  display.print(&quot;Umweltstation&quot;);
+  display.setTextSize(2);
+  display.setCursor(345, 27);
+  display.print(&quot;--:--:--&quot;);
+  display.setTextSize(1);
+  display.setCursor(350, 49);
+  display.print(&quot;--.--.----&quot;);
+}
+
+void updateClock() {
+  if (currentScreen != SCREEN_MAIN) return;
+  DateTime now = rtc.now();
+  disableTouch();
+  display.fillRect(335, 23, 125, 34, NAVY);
+  display.setTextColor(WHITE, NAVY);
+  display.setTextSize(2);
+  display.setCursor(345, 27);
+  if (now.hour() &lt; 10) display.print(&quot;0&quot;);
+  display.print(now.hour());
+  display.print(&quot;:&quot;);
+  if (now.minute() &lt; 10) display.print(&quot;0&quot;);
+  display.print(now.minute());
+  display.print(&quot;:&quot;);
+  if (now.second() &lt; 10) display.print(&quot;0&quot;);
+  display.print(now.second());
+  display.setTextSize(1);
+  display.setCursor(350, 49);
+  if (now.day() &lt; 10) display.print(&quot;0&quot;);
+  display.print(now.day());
+  display.print(&quot;.&quot;);
+  if (now.month() &lt; 10) display.print(&quot;0&quot;);
+  display.print(now.month());
+  display.print(&quot;.&quot;);
+  display.print(now.year());
+}
+
+void drawBox(int x, int y, int w, int h, uint16_t borderColor, const char* title, uint16_t titleColor) {
+  disableTouch();
+  display.drawRoundRect(x, y, w, h, 8, borderColor);
+  display.fillRoundRect(x + 2, y + 2, w - 4, h - 4, 8, DARKGRAY);
+  display.setTextColor(titleColor, DARKGRAY);
+  display.setTextSize(2);
+  display.setCursor(x + 10, y + 7);
+  display.print(title);
+}
+
+void drawStatButton() {
+  disableTouch();
+  display.fillRoundRect(STAT_BTN_X, STAT_BTN_Y, STAT_BTN_W, STAT_BTN_H, 8, CYAN);
+  display.drawRoundRect(STAT_BTN_X, STAT_BTN_Y, STAT_BTN_W, STAT_BTN_H, 8, WHITE);
+  display.setTextColor(BLACK, CYAN);
+  display.setTextSize(2);
+  display.setCursor(STAT_BTN_X + 18, STAT_BTN_Y + 7);
+  display.print(&quot;STAT&quot;);
+}
+
+void drawStaticUI() {
+  disableTouch();
+  display.fillScreen(BLACK);
+  drawHeader();
+  drawBox(BOX1_X, BOX1_Y, BOX_W, BOX_H, ORANGE, &quot;Temperatur&quot;, ORANGE);
+  drawBox(BOX2_X, BOX2_Y, BOX_W, BOX_H, CYAN, &quot;Feuchte&quot;, CYAN);
+  drawBox(BOX3_X, BOX3_Y, BOX_W, BOX_H, MAGENTA, &quot;Druck&quot;, MAGENTA);
+  drawBox(BOX4_X, BOX4_Y, BOX_W, BOX_H, GREEN, &quot;Gas&quot;, GREEN);
+  display.drawRoundRect(STATUS_X, STATUS_Y, STATUS_W, STATUS_H, 10, WHITE);
+  display.fillRoundRect(STATUS_X + 2, STATUS_Y + 2, STATUS_W - 4, STATUS_H - 4, 10, DARKGRAY);
+  display.setTextColor(WHITE, DARKGRAY);
+  display.setTextSize(2);
+  display.setCursor(35, 216);
+  display.print(&quot;Luftstatus:&quot;);
+  display.fillRect(FOOTER_X, FOOTER_Y, FOOTER_W, FOOTER_H, NAVY);
+  display.setTextColor(WHITE, NAVY);
+  display.setTextSize(2);
+  display.setCursor(18, 282);
+  display.print(&quot;System aktiv&quot;);
+  drawStatButton();
+}
+
+void updateValueBox(int x, int y, float value, const char* unit) {
+  disableTouch();
+  display.fillRect(x + 10, y + 29, 175, 22, DARKGRAY);
+  display.setTextColor(WHITE, DARKGRAY);
+  display.setTextSize(2);
+  display.setCursor(x + 10, y + 32);
+  display.print(value, 1);
+  display.print(&quot; &quot;);
+  display.print(unit);
+}
+
+void updateStatus(float gasKOhm) {
+  disableTouch();
+  const char* statusText;
+  uint16_t statusColor;
+  int percent = mapGasToPercent(gasKOhm);
+
+  if (gasKOhm &gt;= GAS_MEDIUM_THRESHOLD) {
+    statusText = &quot;Gut&quot;;
+    statusColor = GREEN;
+  } else if (gasKOhm &gt;= GAS_BAD_THRESHOLD) {
+    statusText = &quot;Mittel&quot;;
+    statusColor = YELLOW;
+  } else {
+    statusText = &quot;Schlecht&quot;;
+    statusColor = RED;
+  }
+
+  display.fillRect(170, 213, 130, 22, DARKGRAY);
+  display.setTextColor(statusColor, DARKGRAY);
+  display.setTextSize(2);
+  display.setCursor(170, 216);
+  display.print(statusText);
+  display.fillRect(35, 242, 390, 12, BLACK);
+  display.drawRect(35, 242, 390, 12, WHITE);
+  int barWidth = map(percent, 0, 100, 0, 388);
+  display.fillRect(36, 243, barWidth, 10, statusColor);
+  display.fillRect(305, 213, 120, 22, DARKGRAY);
+  display.setTextColor(WHITE, DARKGRAY);
+  display.setTextSize(2);
+  display.setCursor(305, 216);
+  display.print(percent);
+  display.print(&quot;%&quot;);
+}
+
+void updateFooterStatus() {
+  if (currentScreen != SCREEN_MAIN) return;
+  disableTouch();
+  display.fillRect(220, FOOTER_Y, 135, FOOTER_H, NAVY);
+  display.setTextSize(2);
+  display.setCursor(225, 282);
+  if (airBad &amp;&amp; alarmMuted) {
+    display.setTextColor(YELLOW, NAVY);
+    display.print(&quot;Quittiert&quot;);
+  } else if (airBad) {
+    display.setTextColor(RED, NAVY);
+    display.print(&quot;ALARM!&quot;);
+  } else {
+    display.setTextColor(WHITE, NAVY);
+    display.print(&quot;Update OK&quot;);
+  }
+  drawStatButton();
+}
+
+void updateMainMeasurementDisplay() {
+  if (currentScreen != SCREEN_MAIN) return;
+  if (!hasSensorReading) return;
+  updateValueBox(BOX1_X, BOX1_Y, currentTemp, &quot;C&quot;);
+  updateValueBox(BOX2_X, BOX2_Y, currentHum, &quot;%&quot;);
+  updateValueBox(BOX3_X, BOX3_Y, currentPressure, &quot;hPa&quot;);
+  updateValueBox(BOX4_X, BOX4_Y, currentGas, &quot;KOhm&quot;);
+  updateStatus(currentGas);
+  updateFooterStatus();
+}
+
+// ======================================================
+// STATS SCREEN
+// ======================================================
+
+void drawBackButton() {
+  disableTouch();
+  display.fillRoundRect(BACK_BTN_X, BACK_BTN_Y, BACK_BTN_W, BACK_BTN_H, 8, ORANGE);
+  display.drawRoundRect(BACK_BTN_X, BACK_BTN_Y, BACK_BTN_W, BACK_BTN_H, 8, WHITE);
+  display.setTextColor(BLACK, ORANGE);
+  display.setTextSize(2);
+  display.setCursor(BACK_BTN_X + 13, BACK_BTN_Y + 9);
+  display.print(&quot;ZURUECK&quot;);
+}
+
+void drawGraphButton() {
+  disableTouch();
+  display.fillRoundRect(GRAPH_BTN_X, GRAPH_BTN_Y, GRAPH_BTN_W, GRAPH_BTN_H, 8, CYAN);
+  display.drawRoundRect(GRAPH_BTN_X, GRAPH_BTN_Y, GRAPH_BTN_W, GRAPH_BTN_H, 8, WHITE);
+  display.setTextColor(BLACK, CYAN);
+  display.setTextSize(2);
+  display.setCursor(GRAPH_BTN_X + 24, GRAPH_BTN_Y + 9);
+  display.print(&quot;GRAPH&quot;);
+}
+
+void drawAlarmButton() {
+  disableTouch();
+  display.fillRoundRect(ALARM_BTN_X, ALARM_BTN_Y, ALARM_BTN_W, ALARM_BTN_H, 8, RED);
+  display.drawRoundRect(ALARM_BTN_X, ALARM_BTN_Y, ALARM_BTN_W, ALARM_BTN_H, 8, WHITE);
+  display.setTextColor(WHITE, RED);
+  display.setTextSize(2);
+  display.setCursor(ALARM_BTN_X + 18, ALARM_BTN_Y + 9);
+  display.print(&quot;ALARME&quot;);
+}
+
+void printAverageBlock(int x, int y, const char* title, AverageStats stats) {
+  display.setTextColor(CYAN, BLACK);
+  display.setTextSize(2);
+  display.setCursor(x, y);
+  display.print(title);
+  display.setTextColor(WHITE, BLACK);
+  if (!stats.hasData) {
+    display.setCursor(x, y + 28);
+    display.print(&quot;Keine Daten&quot;);
+    return;
+  }
+  display.setCursor(x, y + 28);
+  display.print(&quot;T:&quot;); display.print(stats.avgTemp, 1); display.print(&quot;C&quot;);
+  display.setCursor(x, y + 52);
+  display.print(&quot;F:&quot;); display.print(stats.avgHum, 1); display.print(&quot;%&quot;);
+  display.setCursor(x, y + 76);
+  display.print(&quot;D:&quot;); display.print(stats.avgPressure, 0); display.print(&quot;hPa&quot;);
+  display.setCursor(x, y + 100);
+  display.print(&quot;G:&quot;); display.print(stats.avgGas, 1); display.print(&quot;K&quot;);
+}
+
+void drawStatsScreen() {
+  disableTouch();
+  display.fillScreen(BLACK);
+  display.drawRect(10, 14, 460, 288, WHITE);
+  display.fillRect(10, 14, 460, 42, NAVY);
+  display.setTextColor(WHITE, NAVY);
+  display.setTextSize(3);
+  display.setCursor(25, 23);
+  display.print(&quot;Statistik&quot;);
+  AverageStats todayStats = calculateTodayAverage();
+  AverageStats last24Stats = calculateLast24HoursAverage();
+  printAverageBlock(30, 75, &quot;Heute&quot;, todayStats);
+  printAverageBlock(255, 75, &quot;24h&quot;, last24Stats);
+  display.setTextColor(YELLOW, BLACK);
+  display.setTextSize(2);
+  display.setCursor(30, 233);
+  display.print(&quot;Log: &quot;);
+  if (last24Stats.hasData) {
+    display.print(last24Stats.count);
+    display.print(&quot; Werte&quot;);
+  } else {
+    display.print(&quot;leer&quot;);
+  }
+  drawAlarmButton();
+  drawGraphButton();
+  drawBackButton();
+}
+
+// ======================================================
+// ALARM LOG SCREEN
+// ======================================================
+
+void drawAlarmLogScreen() {
+  disableTouch();
+  display.fillScreen(BLACK);
+  display.drawRect(10, 14, 460, 288, WHITE);
+  display.fillRect(10, 14, 460, 42, RED);
+  display.setTextColor(WHITE, RED);
+  display.setTextSize(2);
+  display.setCursor(25, 27);
+  display.print(&quot;Alarm-Protokoll&quot;);
+
+  String lines[5];
+  int lineCount = 0;
+  File file = LittleFS.open(ALARM_FILE, FILE_READ);
+
+  if (file) {
+    while (file.available()) {
+      String line = file.readStringUntil(&#x27;\n&#x27;);
+      line.trim();
+      if (line.length() == 0 || line.startsWith(&quot;epoch&quot;)) continue;
+      if (lineCount &lt; 5) {
+        lines[lineCount] = line;
+        lineCount++;
+      } else {
+        for (int i = 0; i &lt; 4; i++) lines[i] = lines[i + 1];
+        lines[4] = line;
+      }
+    }
+    file.close();
+  }
+
+  if (lineCount == 0) {
+    display.setTextColor(YELLOW, BLACK);
+    display.setTextSize(2);
+    display.setCursor(45, 130);
+    display.print(&quot;Keine Alarme gespeichert&quot;);
+    drawBackButton();
+    return;
+  }
+
+  int startY = 65;
+  int rowH = 38;
+
+  for (int i = 0; i &lt; lineCount; i++) {
+    unsigned long epoch;
+    float temp, hum, pressure, gas;
+    String status;
+
+    if (!parseAlarmLine(lines[i], epoch, temp, hum, pressure, gas, status)) continue;
+    DateTime dt(epoch);
+    int y = startY + i * rowH;
+    display.drawFastHLine(25, y - 5, 425, DARKGRAY);
+    display.setTextSize(1);
+    display.setTextColor(RED, BLACK);
+    display.setCursor(25, y);
+    if (dt.day() &lt; 10) display.print(&quot;0&quot;);
+    display.print(dt.day());
+    display.print(&quot;.&quot;);
+    if (dt.month() &lt; 10) display.print(&quot;0&quot;);
+    display.print(dt.month());
+    display.print(&quot; &quot;);
+    if (dt.hour() &lt; 10) display.print(&quot;0&quot;);
+    display.print(dt.hour());
+    display.print(&quot;:&quot;);
+    if (dt.minute() &lt; 10) display.print(&quot;0&quot;);
+    display.print(dt.minute());
+    display.setTextColor(WHITE, BLACK);
+    display.setCursor(115, y);
+    display.print(&quot;Gas:&quot;); display.print(gas, 1); display.print(&quot;K&quot;);
+    display.setCursor(210, y);
+    display.print(&quot;T:&quot;); display.print(temp, 1); display.print(&quot;C&quot;);
+    display.setCursor(290, y);
+    display.print(&quot;F:&quot;); display.print(hum, 1); display.print(&quot;%&quot;);
+    display.setCursor(370, y);
+    display.print(status);
+  }
+  drawBackButton();
+}
+
+// ======================================================
+// GRAPH SCREEN
+// ======================================================
+
+void drawGraphModeButton(int x, const char* label, GraphMode mode) {
+  uint16_t fillColor = DARKGRAY;
+  if (currentGraphMode == mode) fillColor = getGraphColor(mode);
+  display.fillRoundRect(x, GBTN_Y, GBTN_W, GBTN_H, 7, fillColor);
+  display.drawRoundRect(x, GBTN_Y, GBTN_W, GBTN_H, 7, WHITE);
+  if (currentGraphMode == mode) {
+    display.setTextColor(BLACK, fillColor);
+  } else {
+    display.setTextColor(WHITE, fillColor);
+  }
+  display.setTextSize(1);
+  display.setCursor(x + 15, GBTN_Y + 10);
+  display.print(label);
+}
+
+void drawGraphButtons() {
+  disableTouch();
+  drawGraphModeButton(GBTN_TEMP_X, &quot;TEMP&quot;, GRAPH_TEMP);
+  drawGraphModeButton(GBTN_HUM_X, &quot;FEUCHTE&quot;, GRAPH_HUM);
+  drawGraphModeButton(GBTN_PRESS_X, &quot;DRUCK&quot;, GRAPH_PRESSURE);
+  drawGraphModeButton(GBTN_GAS_X, &quot;GAS&quot;, GRAPH_GAS);
+}
+
+void drawGraphScreen() {
+  disableTouch();
+  display.fillScreen(BLACK);
+  display.drawRect(10, 14, 460, 288, WHITE);
+  display.fillRect(10, 14, 460, 42, NAVY);
+  display.setTextColor(WHITE, NAVY);
+  display.setTextSize(2);
+  display.setCursor(25, 26);
+  display.print(&quot;24h Verlauf: &quot;);
+  display.print(getGraphTitle(currentGraphMode));
+
+  HourlyPoint points[24];
+  calculateHourlyPoints(points);
+
+  int gx = 58;
+  int gy = 78;
+  int gw = 355;
+  int gh = 130;
+  display.drawRect(gx, gy, gw, gh, WHITE);
+
+  bool hasAny = false;
+  float minValue = 100000;
+  float maxValue = -100000;
+
+  for (int i = 0; i &lt; 24; i++) {
+    if (points[i].hasData) {
+      float value = getGraphValue(points[i], currentGraphMode);
+      hasAny = true;
+      if (value &lt; minValue) minValue = value;
+      if (value &gt; maxValue) maxValue = value;
+    }
+  }
+
+  if (!hasAny) {
+    display.setTextColor(YELLOW, BLACK);
+    display.setTextSize(2);
+    display.setCursor(90, 135);
+    display.print(&quot;Noch keine Logdaten&quot;);
+    drawGraphButtons();
+    drawBackButton();
+    return;
+  }
+
+  if (maxValue - minValue &lt; 1.0) {
+    maxValue += 0.5;
+    minValue -= 0.5;
+  }
+
+  uint16_t graphColor = getGraphColor(currentGraphMode);
+  display.setTextColor(CYAN, BLACK);
+  display.setTextSize(1);
+  display.setCursor(12, gy);
+  display.print(maxValue, 1);
+  display.print(getGraphUnit(currentGraphMode));
+  display.setCursor(12, gy + gh - 8);
+  display.print(minValue, 1);
+  display.print(getGraphUnit(currentGraphMode));
+
+  for (int i = 1; i &lt; 4; i++) {
+    int yy = gy + (gh * i / 4);
+    for (int x = gx + 1; x &lt; gx + gw - 1; x += 12) {
+      display.drawFastHLine(x, yy, 6, DARKGRAY);
+    }
+  }
+
+  int lastX = -1;
+  int lastY = -1;
+  for (int i = 0; i &lt; 24; i++) {
+    int px = gx + map(i, 0, 23, 6, gw - 6);
+    if (points[i].hasData) {
+      float value = getGraphValue(points[i], currentGraphMode);
+      int py = gy + gh - 1 - (int)((value - minValue) * (gh - 12) / (maxValue - minValue));
+      py = constrain(py, gy + 6, gy + gh - 6);
+      display.fillCircle(px, py, 3, graphColor);
+      if (lastX &gt;= 0) display.drawLine(lastX, lastY, px, py, YELLOW);
+      lastX = px;
+      lastY = py;
+    }
+  }
+
+  display.setTextColor(WHITE, BLACK);
+  display.setTextSize(2);
+  display.setCursor(58, 212);
+  display.print(getGraphTitle(currentGraphMode));
+  display.print(&quot; in &quot;);
+  display.print(getGraphUnit(currentGraphMode));
+  drawGraphButtons();
+  drawBackButton();
+}
+
+// ======================================================
+// BUTTON + BUZZER
+// ======================================================
+
+void handleButton() {
+  bool buttonPressed = (digitalRead(BUTTON_PIN) == LOW);
+  if (buttonPressed &amp;&amp; millis() - lastButtonPress &gt; debounceDelay) {
+    lastButtonPress = millis();
+    if (airBad) {
+      alarmMuted = !alarmMuted;
+      if (alarmMuted) {
+        Serial.println(&quot;Alarm quittiert.&quot;);
+        digitalWrite(BUZZER_PIN, LOW);
+        buzzerState = false;
+      } else {
+        Serial.println(&quot;Alarm wieder aktiviert.&quot;);
+      }
+      updateFooterStatus();
+    } else {
+      Serial.println(&quot;Button gedrueckt, aber kein Alarm aktiv.&quot;);
+    }
+  }
+}
+
+void handleBuzzer() {
+  if (!airBad || alarmMuted) {
+    digitalWrite(BUZZER_PIN, LOW);
+    buzzerState = false;
+    return;
+  }
+
+  if (millis() - lastBuzzerToggle &gt;= buzzerInterval) {
+    lastBuzzerToggle = millis();
+    buzzerState = !buzzerState;
+    digitalWrite(BUZZER_PIN, buzzerState ? HIGH : LOW);
+  }
+}
+
+// ======================================================
+// TOUCH HANDLING
+// ======================================================
+
+void handleTouch() {
+  disableDisplay();
+  if (!touch.touched()) return;
+  if (millis() - lastTouchAction &lt; touchDebounceDelay) return;
+
+  TS_Point p = touch.getPoint();
+  int screenX, screenY;
+  mapTouchToScreen(p.x, p.y, screenX, screenY);
+
+  Serial.print(&quot;Touch screen x=&quot;);
+  Serial.print(screenX);
+  Serial.print(&quot; y=&quot;);
+  Serial.print(screenY);
+  Serial.print(&quot; raw z=&quot;);
+  Serial.println(p.z);
+
+  if (currentScreen == SCREEN_MAIN) {
+    if (isInside(screenX, screenY, STAT_BTN_X, STAT_BTN_Y, STAT_BTN_W, STAT_BTN_H)) {
+      lastTouchAction = millis();
+      currentScreen = SCREEN_STATS;
+      statsNeedsRefresh = false;
+      drawStatsScreen();
+      return;
+    }
+  }
+
+  if (currentScreen == SCREEN_STATS) {
+    if (isInside(screenX, screenY, ALARM_BTN_X, ALARM_BTN_Y, ALARM_BTN_W, ALARM_BTN_H)) {
+      lastTouchAction = millis();
+      currentScreen = SCREEN_ALARMS;
+      alarmLogNeedsRefresh = false;
+      drawAlarmLogScreen();
+      return;
+    }
+
+    if (isInside(screenX, screenY, GRAPH_BTN_X, GRAPH_BTN_Y, GRAPH_BTN_W, GRAPH_BTN_H)) {
+      lastTouchAction = millis();
+      currentScreen = SCREEN_GRAPH;
+      graphNeedsRefresh = false;
+      drawGraphScreen();
+      return;
+    }
+
+    if (isInside(screenX, screenY, BACK_BTN_X, BACK_BTN_Y, BACK_BTN_W, BACK_BTN_H)) {
+      lastTouchAction = millis();
+      currentScreen = SCREEN_MAIN;
+      drawStaticUI();
+      updateClock();
+      updateMainMeasurementDisplay();
+      return;
+    }
+  }
+
+  if (currentScreen == SCREEN_GRAPH) {
+    if (isInside(screenX, screenY, GBTN_TEMP_X, GBTN_Y, GBTN_W, GBTN_H)) {
+      lastTouchAction = millis();
+      currentGraphMode = GRAPH_TEMP;
+      graphNeedsRefresh = false;
+      drawGraphScreen();
+      return;
+    }
+
+    if (isInside(screenX, screenY, GBTN_HUM_X, GBTN_Y, GBTN_W, GBTN_H)) {
+      lastTouchAction = millis();
+      currentGraphMode = GRAPH_HUM;
+      graphNeedsRefresh = false;
+      drawGraphScreen();
+      return;
+    }
+
+    if (isInside(screenX, screenY, GBTN_PRESS_X, GBTN_Y, GBTN_W, GBTN_H)) {
+      lastTouchAction = millis();
+      currentGraphMode = GRAPH_PRESSURE;
+      graphNeedsRefresh = false;
+      drawGraphScreen();
+      return;
+    }
+
+    if (isInside(screenX, screenY, GBTN_GAS_X, GBTN_Y, GBTN_W, GBTN_H)) {
+      lastTouchAction = millis();
+      currentGraphMode = GRAPH_GAS;
+      graphNeedsRefresh = false;
+      drawGraphScreen();
+      return;
+    }
+
+    if (isInside(screenX, screenY, BACK_BTN_X, BACK_BTN_Y, BACK_BTN_W, BACK_BTN_H)) {
+      lastTouchAction = millis();
+      currentScreen = SCREEN_STATS;
+      statsNeedsRefresh = false;
+      drawStatsScreen();
+      return;
+    }
+  }
+
+  if (currentScreen == SCREEN_ALARMS) {
+    if (isInside(screenX, screenY, BACK_BTN_X, BACK_BTN_Y, BACK_BTN_W, BACK_BTN_H)) {
+      lastTouchAction = millis();
+      currentScreen = SCREEN_STATS;
+      statsNeedsRefresh = false;
+      drawStatsScreen();
+      return;
+    }
+  }
+}
+
+// ======================================================
+// SENSOR UPDATE
+// ======================================================
+
+void updateSensorData() {
+  if (!bme.performReading()) {
+    Serial.println(&quot;Messung fehlgeschlagen!&quot;);
+
+    if (currentScreen == SCREEN_MAIN) {
+      disableTouch();
+      display.fillRect(220, FOOTER_Y, 135, FOOTER_H, NAVY);
+      display.setTextColor(RED, NAVY);
+      display.setTextSize(2);
+      display.setCursor(225, 282);
+      display.print(&quot;Messfehler&quot;);
+    }
+    return;
+  }
+
+  currentTemp = bme.temperature + TEMP_OFFSET;
+  currentHum = bme.humidity;
+  currentPressure = (bme.pressure / 100.0) + PRESSURE_OFFSET;
+  currentGas = bme.gas_resistance / 1000.0;
+  hasSensorReading = true;
+
+  sumTemp += currentTemp;
+  sumHum += currentHum;
+  sumPressure += currentPressure;
+  sumGas += currentGas;
+  statsCount++;
+
+  if (FORCE_ALARM_TEST) {
+    airBad = true;
+  } else {
+    airBad = currentGas &lt; GAS_BAD_THRESHOLD;
+  }
+
+  if (airBad &amp;&amp; !lastAirBadState) {
+    saveAlarmToLog(&quot;Schlecht&quot;);
+  }
+
+  lastAirBadState = airBad;
+
+  if (!airBad) {
+    alarmMuted = false;
+  }
+
+  Serial.println(&quot;------ Umweltwerte ------&quot;);
+  Serial.print(&quot;Temperatur kalibriert: &quot;); Serial.print(currentTemp); Serial.println(&quot; C&quot;);
+  Serial.print(&quot;Feuchtigkeit: &quot;); Serial.print(currentHum); Serial.println(&quot; %&quot;);
+  Serial.print(&quot;Druck: &quot;); Serial.print(currentPressure); Serial.println(&quot; hPa&quot;);
+  Serial.print(&quot;Gas: &quot;); Serial.print(currentGas); Serial.println(&quot; KOhm&quot;);
+  Serial.print(&quot;Luftqualitaet: &quot;);
+  if (currentGas &gt;= GAS_MEDIUM_THRESHOLD) Serial.println(&quot;Gut&quot;);
+  else if (currentGas &gt;= GAS_BAD_THRESHOLD) Serial.println(&quot;Mittel&quot;);
+  else Serial.println(&quot;Schlecht&quot;);
+  Serial.print(&quot;Alarm aktiv: &quot;); Serial.println(airBad ? &quot;JA&quot; : &quot;NEIN&quot;);
+  Serial.print(&quot;Alarm quittiert: &quot;); Serial.println(alarmMuted ? &quot;JA&quot; : &quot;NEIN&quot;);
+  Serial.println(&quot;-------------------------&quot;);
+
+  if (currentScreen == SCREEN_MAIN) {
+    updateMainMeasurementDisplay();
+  }
+}
+
+// ======================================================
+// LOGGING TIMER
+// ======================================================
+
+void handleLogging() {
+  if (!hasSensorReading) return;
+
+  if (millis() - lastLogSave &gt;= logInterval) {
+    lastLogSave = millis();
+    saveMeasurementToLog();
+    pruneOldLogEntries();
+    pruneOldAlarmEntries();
+    statsNeedsRefresh = true;
+    graphNeedsRefresh = true;
+  }
+}
+
+// ======================================================
+// SETUP
+// ======================================================
+
+void setup() {
+  Serial.begin(115200);
+  delay(1500);
+  Serial.println(&quot;Starte Umweltstation mit Alarm-Protokoll...&quot;);
+
+  SPI.begin(18, 19, 23);
+  pinMode(TFT_CS, OUTPUT);
+  pinMode(TOUCH_CS, OUTPUT);
+  digitalWrite(TFT_CS, HIGH);
+  digitalWrite(TOUCH_CS, HIGH);
+
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+  Wire.begin(I2C_SDA, I2C_SCL);
+  initStorage();
+
+  disableTouch();
+  display.init(320, 480, 0, 0, ST7796S_RGB);
+  display.setRotation(DISPLAY_ROTATION);
+  showStartupMessage(&quot;Starte...&quot;, WHITE);
+
+  disableDisplay();
+  touch.begin();
+  touch.setRotation(TOUCH_ROTATION);
+
+  if (!rtc.begin()) {
+    showStartupMessage(&quot;RTC fehlt!&quot;, RED);
+    Serial.println(&quot;RTC nicht gefunden!&quot;);
+    while (1) delay(1000);
+  }
+
+  Serial.println(&quot;RTC gefunden!&quot;);
+
+  if (rtc.lostPower()) {
+    Serial.println(&quot;RTC Zeit verloren. Setze Kompilierzeit...&quot;);
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  } else {
+    Serial.println(&quot;RTC Zeit vorhanden. Kein Reset der Uhrzeit.&quot;);
+  }
+
+  Serial.println(&quot;Starte BME680...&quot;);
+
+  if (!bme.begin(0x76)) {
+    Serial.println(&quot;BME680 nicht bei 0x76 gefunden. Teste 0x77...&quot;);
+    if (!bme.begin(0x77)) {
+      showStartupMessage(&quot;BME680 fehlt!&quot;, RED);
+      while (1) {
+        Serial.println(&quot;BME680 fehlt weiterhin.&quot;);
+        delay(1500);
+      }
+    }
+  }
+
+  Serial.println(&quot;BME680 erfolgreich initialisiert!&quot;);
+  bme.setTemperatureOversampling(BME680_OS_8X);
+  bme.setHumidityOversampling(BME680_OS_2X);
+  bme.setPressureOversampling(BME680_OS_4X);
+  bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
+  bme.setGasHeater(320, 150);
+
+  currentScreen = SCREEN_MAIN;
+  drawStaticUI();
+  updateClock();
+  updateFooterStatus();
+  lastLogSave = millis();
+  Serial.println(&quot;Setup fertig.&quot;);
+}
+
+// ======================================================
+// LOOP
+// ======================================================
+
+void loop() {
+  handleTouch();
+  handleButton();
+  handleBuzzer();
+
+  if (millis() - lastClockUpdate &gt;= clockUpdateInterval) {
+    lastClockUpdate = millis();
+    updateClock();
+  }
+
+  if (millis() - lastSensorUpdate &gt;= sensorUpdateInterval) {
+    lastSensorUpdate = millis();
+    updateSensorData();
+  }
+
+  handleLogging();
+
+  if (currentScreen == SCREEN_STATS &amp;&amp; statsNeedsRefresh) {
+    statsNeedsRefresh = false;
+    drawStatsScreen();
+  }
+
+  if (currentScreen == SCREEN_GRAPH &amp;&amp; graphNeedsRefresh) {
+    graphNeedsRefresh = false;
+    drawGraphScreen();
+  }
+
+  if (currentScreen == SCREEN_ALARMS &amp;&amp; alarmLogNeedsRefresh) {
+    alarmLogNeedsRefresh = false;
+    drawAlarmLogScreen();
+  }
+}
+</pre></div></details><p><a class="btn" href="assets/esp32_umweltstation_final.ino" download>Finalen Code herunterladen</a></p></div></div></section>
+
+    <section id="galerie"><div class="wrap"><div class="section-title reveal"><h2>Bilder und Nachweise</h2><p>Die Website enthält die Bilder und Screenshots, die aus deiner Doku und deinem Projektstand verfügbar waren. Klick auf ein Bild öffnet die Großansicht.</p></div><div class="gallery">
+<figure class="gallery-card" data-src="assets/device-test.png">
+  <img src="assets/device-test.png" alt="Display/Testansicht" loading="lazy" />
+  <figcaption><strong>Display/Testansicht</strong><span>Screenshot aus dem Projektverlauf.</span></figcaption>
+</figure>
+
+<figure class="gallery-card" data-src="assets/scrumboard-1.png">
+  <img src="assets/scrumboard-1.png" alt="Scrumboard Ansicht 1" loading="lazy" />
+  <figcaption><strong>Scrumboard Ansicht 1</strong><span>Projektboard mit Karten und Statusspalten.</span></figcaption>
+</figure>
+
+<figure class="gallery-card" data-src="assets/scrumboard-2.png">
+  <img src="assets/scrumboard-2.png" alt="Scrumboard Ansicht 2" loading="lazy" />
+  <figcaption><strong>Scrumboard Ansicht 2</strong><span>Weitere Ansicht des Projektboards.</span></figcaption>
+</figure>
+
+<figure class="gallery-card" data-src="assets/repository-view.png">
+  <img src="assets/repository-view.png" alt="Repository Ansicht" loading="lazy" />
+  <figcaption><strong>Repository Ansicht</strong><span>GitHub Repository oder Ordnerstruktur.</span></figcaption>
+</figure>
+
+<figure class="gallery-card" data-src="assets/doku-bild-1.jpg">
+  <img src="assets/doku-bild-1.jpg" alt="Dokumentationsbild 1" loading="lazy" />
+  <figcaption><strong>Dokumentationsbild 1</strong><span>Aus der finalen PDF extrahiertes Bild.</span></figcaption>
+</figure>
+
+<figure class="gallery-card" data-src="assets/doku-bild-2.jpg">
+  <img src="assets/doku-bild-2.jpg" alt="Dokumentationsbild 2" loading="lazy" />
+  <figcaption><strong>Dokumentationsbild 2</strong><span>Aus der finalen PDF extrahiertes Bild.</span></figcaption>
+</figure>
+
+<figure class="gallery-card" data-src="assets/doku-bild-3.jpg">
+  <img src="assets/doku-bild-3.jpg" alt="Dokumentationsbild 3" loading="lazy" />
+  <figcaption><strong>Dokumentationsbild 3</strong><span>Aus der finalen PDF extrahiertes Bild.</span></figcaption>
+</figure>
+
+<figure class="gallery-card" data-src="assets/doku-bild-4.jpg">
+  <img src="assets/doku-bild-4.jpg" alt="Dokumentationsbild 4" loading="lazy" />
+  <figcaption><strong>Dokumentationsbild 4</strong><span>Aus der finalen PDF extrahiertes Bild.</span></figcaption>
+</figure></div></div></section>
+
+    <section id="reflexion"><div class="wrap"><div class="section-title reveal"><h2>Reflexion</h2><p>Was am Projekt besonders wichtig war.</p></div><div class="grid-3"><article class="card reveal"><span class="tag">Stolz</span><h3>Display und Sensorwerte</h3><p>Die finale Oberfläche wirkt wie ein echtes Messgerät und macht die Sensorwerte verständlich sichtbar.</p></article><article class="card reveal"><span class="tag">Lernen</span><h3>Debugging</h3><p>RTC- und Touch-Probleme wurden systematisch eingegrenzt statt geraten.</p></article><article class="card reveal"><span class="tag">Projektende</span><h3>Von Idee bis Prototyp</h3><p>Planung, Hardware, Software, Tests, Gehäuse, Repository und Doku wurden zu einem Gesamtprojekt.</p></article></div></div></section>
+  </main>
+  <div class="modal" id="modal"><button class="btn danger" id="closeModal">Schließen</button><img id="modalImg" alt="Großansicht" /></div>
+  <footer><div class="wrap"><strong>ESP32 Umweltmessstation</strong><br>Projekt von Miklos Müller · <a href="https://github.com/MityusPityus/Umwelt-Messgeraet" target="_blank">GitHub Repository</a> · <a href="assets/ESP32_Umweltstation_Projektdokumentation_FINAL_v2.pdf" target="_blank">PDF-Dokumentation</a></div></footer>
+  <script>
+    const revealObs = new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.12});document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
+    const pad=n=>String(n).padStart(2,'0');function tick(){const d=new Date();document.getElementById('clock').textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;}setInterval(tick,1000);tick();
+    document.getElementById('fullscreen').addEventListener('click',()=>document.documentElement.requestFullscreen?.());
+    document.querySelectorAll('.screen-actions button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.screen-view').forEach(v=>v.classList.remove('active'));document.getElementById('screen-'+b.dataset.screen).classList.add('active');if(b.dataset.screen==='graph')drawMiniChart();}));
+    function drawMiniChart(){const c=document.getElementById('miniChart'); if(!c)return; const ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#eaf4ff';ctx.fillRect(0,0,w,h);ctx.strokeStyle='rgba(16,61,102,.18)';for(let i=0;i<5;i++){let y=20+i*30;ctx.beginPath();ctx.moveTo(18,y);ctx.lineTo(w-18,y);ctx.stroke();} const data=Array.from({length:24},(_,i)=>25+Math.sin(i/23*Math.PI*2)*1.1+(i>15?.6:0)); const min=23.6,max=27.2; const sx=i=>20+(w-40)*i/23, sy=v=>h-24-(v-min)/(max-min)*(h-45);ctx.beginPath();data.forEach((v,i)=>i?ctx.lineTo(sx(i),sy(v)):ctx.moveTo(sx(i),sy(v)));ctx.strokeStyle='#ff9f43';ctx.lineWidth=4;ctx.stroke();data.forEach((v,i)=>{if(i%4===0){ctx.beginPath();ctx.arc(sx(i),sy(v),4,0,Math.PI*2);ctx.fillStyle='#ffd166';ctx.fill();}});}
+    drawMiniChart();
+    document.querySelectorAll('.calib-controls button').forEach(b=>b.addEventListener('click',()=>{const gas=parseFloat(b.dataset.gas);let status='Gut',color='var(--green)',text='Status grün, kein Buzzer.';if(gas<70){status='Schlecht';color='var(--red)';text='Status rot, Buzzer aktiv, Alarm wird gespeichert.'}else if(gas<100){status='Mittel';color='var(--yellow)';text='Status gelb, noch kein Buzzer.'}const box=document.getElementById('gasResult');box.innerHTML=`<small>Gaswert</small><br><strong style="color:${color}">${gas.toFixed(1)} kΩ · ${status}</strong><p>${text}</p>`;}));
+    document.querySelectorAll('.gallery-card').forEach(g=>g.addEventListener('click',()=>{document.getElementById('modalImg').src=g.dataset.src;document.getElementById('modal').classList.add('open');}));document.getElementById('closeModal').addEventListener('click',()=>document.getElementById('modal').classList.remove('open'));
+    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById('tab-'+t.dataset.tab).classList.add('active');}));
+    document.getElementById('functionSearch').addEventListener('input',e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('.function-card').forEach(c=>{c.style.display=c.dataset.name.includes(q)||c.textContent.toLowerCase().includes(q)?'block':'none';})});
+
+    const docSearch = document.getElementById('docSearch');
+    if (docSearch) {
+      const docFullText = document.getElementById('docFullText');
+      const originalText = docFullText.textContent;
+      docSearch.addEventListener('input', e => {
+        const q = e.target.value.trim();
+        if (!q) { docFullText.textContent = originalText; document.getElementById('docSearchInfo').textContent = 'Suchbegriff eingeben, dann wird der erste Treffer markiert.'; return; }
+        const idx = originalText.toLowerCase().indexOf(q.toLowerCase());
+        if (idx < 0) { docFullText.textContent = originalText; document.getElementById('docSearchInfo').textContent = 'Kein Treffer gefunden.'; return; }
+        const start = Math.max(0, idx - 800);
+        const end = Math.min(originalText.length, idx + q.length + 1800);
+        docFullText.textContent = originalText.slice(start, end);
+        document.getElementById('docSearchInfo').textContent = 'Ausschnitt um den ersten Treffer wird angezeigt.';
+      });
+    }
+  </script>
+</body>
+</html>
